@@ -226,6 +226,21 @@ function play(id){
   display('<div class="play-head"><h1>'+escapeHTML(game.title)+'</h1><span class="clock" id="clock" role="timer"></span></div><div class="progress" aria-hidden="true"><span style="width:'+((game.index+1)/game.words.length*100)+'%"></span></div><button class="word-card" data-action="next"><strong>'+escapeHTML(game.words[game.index])+'</strong><span>화면을 탭해서 '+(game.index===game.words.length-1?'마치기':'다음 카드 보기')+'</span></button><div class="play-bottom"><span>'+(game.index+1)+' / '+game.words.length+'</span><a class="button secondary small" href="#/cards/'+id+'">그만하기</a></div>');
   updateClock();
 }
+let recoveryToken;
+function readRecoveryLink(){
+  const params=new URLSearchParams(location.hash.slice(1));
+  if(params.get('type')==='recovery'||params.has('error_code')){
+    recoveryToken=params.get('type')==='recovery'?params.get('access_token'):null;
+    history.replaceState(null,'',location.pathname+'#/reset');
+  }
+}
+function resetPage(){
+  if(!recoveryToken){
+    display(back('admin','관리자 로그인')+heading('복구 링크를 다시 요청해 주세요','메일에서 가장 최근에 받은 링크를 열어 주세요.'));
+    return;
+  }
+  display(heading('새 비밀번호 설정')+'<div class="panel"><form id="reset-form"><label>새 비밀번호<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label>새 비밀번호 확인<input name="confirm" type="password" autocomplete="new-password" required></label>'+status+'<button class="button purple full">비밀번호 저장</button></form></div>');
+}
 function admin(id){
   if(cloudEnabled&&!isAdmin()){
     display(back('','게임 선택')+heading('관리자 로그인')+'<div class="panel"><form id="admin-form"><label>이메일<input type="email" name="email" autocomplete="username" required></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required></label>'+status+'<button class="button purple full">로그인</button></form></div>');
@@ -243,7 +258,9 @@ function admin(id){
 function missing(to,label){display(back(to,label)+heading('항목을 찾을 수 없어요')); }
 function render(){
   clearTimeout(timeout);
+  readRecoveryLink();
   const path=route();
+  if(path[0]!=='reset')recoveryToken=null;
   const [page,id,mode]=path;
   const routeKey=path.join('/');
   if(routeKey!==previousRoute)answerVisible=false;
@@ -252,7 +269,8 @@ function render(){
   previousRoute=routeKey;
   if(page==='admin')adminLink.setAttribute('aria-current','page');
   else adminLink.removeAttribute('aria-current');
-  if(page==='mysteries')mysteries(id);
+  if(page==='reset')resetPage();
+  else if(page==='mysteries')mysteries(id);
   else if(page==='admin')admin(id);
   else if(page==='cards'){
     if(!id)cards();
@@ -271,6 +289,28 @@ app.addEventListener('submit',async event=>{
   const form=event.target;
   const fields=new FormData(form);
   const value=key=>String(fields.get(key)??'').trim();
+  if(form.id==='reset-form'){
+    const password=fields.get('password');
+    if(password!==fields.get('confirm')){issue('두 비밀번호가 달라요. 다시 확인해 주세요.');return;}
+    const button=form.querySelector('button');
+    button.disabled=true;
+    try{
+      const response=await fetch(projectUrl+'/auth/v1/user',{
+        method:'PUT',headers:{apikey:publishableKey,Authorization:'Bearer '+recoveryToken,'Content-Type':'application/json'},
+        body:JSON.stringify({password})
+      });
+      if(!response.ok){
+        const error=await response.json().catch(()=>({}));
+        if(response.status===401||response.status===403){recoveryToken=null;resetPage();}
+        else issue(error.code==='same_password'?'이전과 다른 비밀번호를 입력해 주세요.':'비밀번호를 저장하지 못했어요. 새 비밀번호와 복구 링크를 확인해 주세요.');
+        return;
+      }
+      recoveryToken=null;
+      display(heading('비밀번호를 변경했어요')+'<a class="button purple" href="#/admin">관리자 로그인</a>');
+    }catch{issue('연결을 확인하고 다시 시도해 주세요.');}
+    finally{button.disabled=false;}
+    return;
+  }
   if(form.id==='admin-form'){
     const control=form.querySelector('button');
     control.disabled=true;
