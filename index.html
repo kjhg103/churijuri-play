@@ -21,7 +21,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><a href="#/" class="logo"><span class="mark" aria-hidden="true">✦</span>추리주리</a><a href="#/admin" class="manage" id="admin-link">관리 웹</a></div></header>
+<header class="top"><div class="top-inner"><a href="#/" class="logo"><span class="mark" aria-hidden="true">✦</span>추리주리</a><a href="#/admin" class="manage" id="admin-link">관리자 로그인</a></div></header>
 <main id="app" class="wrap"></main>
 <footer class="foot"><div class="foot-inner"><span class="mark" aria-hidden="true">✦</span>추리주리</div></footer>
 <script>
@@ -105,7 +105,7 @@ async function storeChange(type,list,change){
       await request('/rest/v1/rpc/churijuri_move_mystery',{method:'POST',body:{item_id:change.id,move_up:change.up},admin:true,write:true});
     }else{
       const path=change.method==='POST'?table:table+filter;
-      await request(path,{method:change.method,body:change.body,admin:type==='mysteries'||change.method==='DELETE',write:true});
+      await request(path,{method:change.method,body:change.body,admin:change.method==='PATCH'||change.method==='DELETE',write:true});
     }
     cloudCache[type]=list;
     await refreshCloud();
@@ -154,14 +154,18 @@ function recordRow(url,icon,title,detail='',lime=false){
   return '<a href="#/'+url+'" class="row"><div class="row-main"><span class="tile'+(lime?' lime':'')+'" aria-hidden="true">'+icon+'</span><div><h2>'+escapeHTML(title)+'</h2>'+(detail?'<p>'+escapeHTML(detail)+'</p>':'')+'</div></div><span aria-hidden="true">›</span></a>';
 }
 function mysteries(id){
+  if(id==='new'){
+    display(back('mysteries','문제 목록')+heading('추리 문제 추가')+'<div class="panel"><form id="mystery-form" data-public="true"><label>제목<input name="title" maxlength="60" required></label><label>문제<textarea name="question" maxlength="3000" required></textarea></label><label>정답<textarea name="answer" maxlength="3000" required></textarea></label>'+status+'<button class="button purple full">문제 등록</button></form></div>');
+    return;
+  }
   const list=records('mysteries');
   if(!id){
-    display(back('','게임 선택')+heading('바다거북 수프','문제를 읽고, 예 또는 아니오로 답할 수 있는 질문을 해보세요.')+'<div class="stack">'+(list.map(m=>recordRow('mysteries/'+m.id,'?',m.title)).join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>');
+    display(back('','게임 선택')+heading('바다거북 수프','문제를 읽고, 예 또는 아니오로 답할 수 있는 질문을 해보세요.')+'<div class="stack">'+(list.map(m=>recordRow('mysteries/'+m.id,'?',m.title)).join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div><a class="button full bottom-action" href="#/mysteries/new">＋ 추리 문제 추가</a>');
     return;
   }
   const item=list.find(m=>m.id===id);
   if(!item){missing('mysteries','문제 목록');return;}
-  display(back('mysteries','문제 목록')+heading(item.title)+'<section class="panel"><h2>문제</h2><p>'+escapeHTML(item.question)+'</p></section><button class="button purple full" data-action="answer" aria-expanded="'+answerVisible+'" aria-controls="answer">'+(answerVisible?'정답 숨기기':'정답 보기')+'</button><section id="answer" class="panel answer bottom-action"'+(answerVisible?'':' hidden')+'><h2>정답</h2><p>'+escapeHTML(item.answer)+'</p></section>');
+  display(back('mysteries','문제 목록')+heading(item.title)+'<section class="panel"><h2>문제</h2><p>'+escapeHTML(item.question)+'</p></section>'+(isAdmin()?'<button class="button purple full" data-action="answer" aria-expanded="'+answerVisible+'" aria-controls="answer">'+(answerVisible?'정답 숨기기':'정답 보기')+'</button><section id="answer" class="panel answer bottom-action"'+(answerVisible?'':' hidden')+'><h2>정답</h2><p>'+escapeHTML(item.answer)+'</p></section>':'<button class="button purple full" disabled>정답 보기</button><p class="status">관리자로 로그인하면 정답을 볼 수 있어요.</p>'));
 }
 function cards(){
   const list=records('sets');
@@ -267,6 +271,7 @@ function render(){
   if(previousRoute.endsWith('/play')&&mode!=='play')game=null;
   const changed=routeKey!==previousRoute;
   previousRoute=routeKey;
+  adminLink.textContent=isAdmin()?'추리 문제 관리':'관리자 로그인';
   if(page==='admin')adminLink.setAttribute('aria-current','page');
   else adminLink.removeAttribute('aria-current');
   if(page==='reset')resetPage();
@@ -338,7 +343,7 @@ app.addEventListener('submit',async event=>{
     const entry={id:id||makeId(),title,question,answer};
     const change=id?{method:'PATCH',id,body:{title,question,answer}}:{method:'POST',body:entry};
     if(!await storeChange('mysteries',id?list.map(item=>item.id===id?entry:item):[...list,entry],change)){issue(saveError());return;}
-    location.hash='/admin';
+    location.hash=form.dataset.public?'/mysteries':'/admin';
   }else if(form.id==='duration-form'){
     const seconds=Number(value('seconds'));
     const set=records('sets').find(item=>item.id===form.dataset.id);
@@ -359,7 +364,7 @@ app.addEventListener('click',async event=>{
   }else if(action==='refresh'){
     await refreshCloud();
     if(!app.querySelector('form'))render();else updateSyncStatus();
-  }else if(action==='answer'){
+  }else if(action==='answer'&&isAdmin()){
     answerVisible=!answerVisible;
     document.querySelector('#answer').hidden=!answerVisible;
     button.textContent=answerVisible?'정답 숨기기':'정답 보기';
