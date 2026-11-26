@@ -300,7 +300,7 @@ function liarGame(page){
     display(back('liar','라이어게임')+heading('게임 설정')+'<div class="panel"><form id="liar-setup"><label>참가 인원<input type="number" name="count" min="3" max="20" value="'+liarSetup.count+'" required></label><div><label for="category-trigger">카테고리</label><input type="hidden" name="category" value="'+escapeHTML(liarSetup.category)+'"><button id="category-trigger" type="button" class="picker-trigger" aria-haspopup="dialog" aria-controls="category-picker" data-action="open-category"><span id="category-value">'+escapeHTML(liarSetup.category||'무작위')+'</span><span aria-hidden="true">⌄</span></button></div>'+status+'<button type="submit" class="button purple full">게임 시작</button></form></div><dialog class="picker-dialog" id="category-picker" aria-labelledby="category-picker-title"><div class="picker-head"><h2 id="category-picker-title">카테고리 선택</h2><button type="button" class="picker-close" aria-label="닫기" data-action="close-category">×</button></div><div class="picker-options">'+options+'</div></dialog>');
     return;
   }
-  display(backLink+heading('라이어게임','폰을 돌려가며 각자 단어를 확인해요. 한 명만 다른 단어를 받아요.')+'<a class="button purple full" href="#/liar/setup">시작하기</a>');
+  display(backLink+heading('라이어게임','폰을 돌려가며 각자 단어를 확인해요. 한 명만 다른 단어를 받아요.')+'<a class="button purple full" href="#/liar/setup">시작하기</a>'+(isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/liar">키워드 관리</a>':''));
 }
 
 async function startLiar(form,fields){
@@ -342,7 +342,7 @@ const pairFilter=(category,pair)=>categoryFilter(category)+'&word_a=eq.'+encodeU
 
 function liarAdmin(){
   const options=Object.keys(liarPairs).map(category=>'<option'+(category===managedCategory?' selected':'')+'>'+escapeHTML(category)+'</option>').join('');
-  display(back('admin','추리 문제 관리')+heading('라이어게임 키워드 관리')+'<div class="panel"><form id="liar-manage"><label>카테고리<select name="manage-category" class="picker-trigger">'+options+'</select></label><label>단어 1<input name="word_a" maxlength="60" required></label><label>단어 2<input name="word_b" maxlength="60" required></label>'+status+'<div class="actions"><button type="submit" class="button purple">단어 쌍 추가</button><button type="button" class="button secondary" data-action="liar-edit-cancel" hidden>수정 취소</button><button type="button" class="button secondary" data-action="liar-remove" hidden>삭제</button></div></form></div><div id="liar-admin-list" class="stack bottom-action" aria-live="polite"></div>');
+  display(back('liar','라이어게임')+heading('라이어게임 키워드 관리')+'<div class="panel"><form id="liar-manage"><label>카테고리<select name="manage-category" class="picker-trigger">'+options+'</select></label><label>단어 1<input name="word_a" maxlength="60" required></label><label>단어 2<input name="word_b" maxlength="60" required></label>'+status+'<div class="actions"><button type="submit" class="button purple">단어 쌍 추가</button><button type="button" class="button secondary" data-action="liar-edit-cancel" hidden>수정 취소</button><button type="button" class="button secondary" data-action="liar-remove" hidden>삭제</button></div></form></div><div id="liar-admin-list" class="stack bottom-action" aria-live="polite"></div>');
   loadManagedPairs();
 }
 
