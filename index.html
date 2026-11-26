@@ -337,12 +337,12 @@ let managedCategory='게임';
 let managedRows=[];
 let managedPair=null;
 let manageLoad=0;
-const categoryFilter=category=>'?category=eq.'+encodeURIComponent('"'+category+'"');
-const pairFilter=(category,pair)=>categoryFilter(category)+'&word_a=eq.'+encodeURIComponent('"'+pair.word_a.replace(/["\\]/g,'\\$&')+'"')+'&word_b=eq.'+encodeURIComponent('"'+pair.word_b.replace(/["\\]/g,'\\$&')+'"');
+const categoryFilter=category=>'?category=eq.'+encodeURIComponent(category);
+const pairFilter=(category,pair)=>categoryFilter(category)+'&word_a=eq.'+encodeURIComponent(pair.word_a)+'&word_b=eq.'+encodeURIComponent(pair.word_b);
 
 function liarAdmin(){
   const options=Object.keys(liarPairs).map(category=>'<option'+(category===managedCategory?' selected':'')+'>'+escapeHTML(category)+'</option>').join('');
-  display(back('liar','라이어게임')+heading('라이어게임 키워드 관리')+'<div class="panel"><form id="liar-manage"><label>카테고리<select name="manage-category" class="picker-trigger">'+options+'</select></label><label>단어 1<input name="word_a" maxlength="60" required></label><label>단어 2<input name="word_b" maxlength="60" required></label>'+status+'<div class="actions"><button type="submit" class="button purple">단어 쌍 추가</button><button type="button" class="button secondary" data-action="liar-edit-cancel" hidden>수정 취소</button><button type="button" class="button secondary" data-action="liar-remove" hidden>삭제</button></div></form></div><div id="liar-admin-list" class="stack bottom-action" aria-live="polite"></div>');
+  display(back('liar','라이어게임')+heading('라이어게임 키워드 관리')+'<div class="panel"><form id="liar-manage"><label>카테고리<select name="manage-category" class="picker-trigger">'+options+'</select></label><label>단어 1<input name="word_a" maxlength="60" required></label><label>단어 2<input name="word_b" maxlength="60" required></label>'+status+'<div class="actions"><button type="submit" class="button purple">단어 쌍 추가</button><button type="button" class="button secondary" data-action="liar-edit-cancel" hidden>수정 취소</button><button type="button" class="button secondary" data-action="liar-remove" hidden>삭제</button></div></form></div><section class="panel bottom-action" aria-labelledby="liar-list-title"><h2 id="liar-list-title">등록된 단어 쌍</h2><label>단어 검색<input id="liar-admin-search" type="search" placeholder="단어 1 또는 단어 2 검색"></label><div id="liar-admin-list" class="stack bottom-action"></div></section>');
   loadManagedPairs();
 }
 
@@ -355,10 +355,17 @@ async function loadManagedPairs(){
     const rows=await request(liarTable+categoryFilter(managedCategory)+'&order=word_a.asc,word_b.asc');
     if(version!==manageLoad||!list.isConnected)return;
     managedRows=rows;
-    list.innerHTML='<p>'+rows.length+'쌍</p>'+rows.map((row,i)=>'<div class="row"><h2>'+escapeHTML(row.word_a)+' · '+escapeHTML(row.word_b)+'</h2><button type="button" class="button secondary small" data-action="liar-edit" data-id="'+i+'" aria-label="'+escapeHTML(row.word_a+' · '+row.word_b+' 수정')+'">수정</button></div>').join('');
+    renderManagedPairs();
   }catch{
     if(version===manageLoad&&list.isConnected)list.textContent='목록을 불러오지 못했어요. 페이지를 새로고침해 주세요.';
   }
+}
+
+function renderManagedPairs(){
+  const list=app.querySelector('#liar-admin-list');
+  const query=app.querySelector('#liar-admin-search').value.trim().toLocaleLowerCase();
+  const visible=managedRows.map((row,i)=>({row,i})).filter(({row})=>[row.word_a,row.word_b].some(word=>word.toLocaleLowerCase().includes(query)));
+  list.innerHTML='<p role="status">'+visible.length+' / '+managedRows.length+'쌍</p>'+ (visible.map(({row,i})=>'<div class="row"><h2>'+escapeHTML(row.word_a)+' · '+escapeHTML(row.word_b)+'</h2><button type="button" class="button secondary small" data-action="liar-edit" data-id="'+i+'" aria-label="'+escapeHTML(row.word_a+' · '+row.word_b+' 수정')+'">수정</button></div>').join('')||'<p class="empty">'+(managedRows.length?'검색 결과가 없어요.':'이 카테고리에 등록된 단어 쌍이 없어요.')+'</p>');
 }
 
 function selectManagedPair(pair){
@@ -431,11 +438,13 @@ function render(){
 }
 const parseWords = value => value.split(/\r\n|\r|\n/).map(word=>word.trim()).filter(Boolean);
 app.addEventListener('input', event=>{
+  if(event.target.id==='liar-admin-search')renderManagedPairs();
   if(event.target.name==='words')document.querySelector('#word-count').textContent=parseWords(event.target.value).length+'개';
 });
 app.addEventListener('change',event=>{
   if(event.target.name!=='manage-category')return;
   managedCategory=event.target.value;
+  app.querySelector('#liar-admin-search').value='';
   selectManagedPair(null);
   issue('');
   loadManagedPairs();
