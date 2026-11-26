@@ -1,0 +1,101 @@
+name: Build Android APK
+on:
+  workflow_dispatch:
+  push:
+    paths: [".github/workflows/android.yml"]
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-35" "build-tools;35.0.0"
+      - run: |
+          mkdir -p android
+          cat > android/MainActivity.java <<'CHURI_EOF'
+          package com.cutejuri.app;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+
+          public final class MainActivity extends Activity {
+              private WebView web;
+
+              @Override
+              public void onCreate(Bundle state) {
+                  super.onCreate(state);
+                  web = new WebView(this);
+                  web.getSettings().setJavaScriptEnabled(true);
+                  web.getSettings().setDomStorageEnabled(true);
+                  web.getSettings().setAllowFileAccess(false);
+                  web.getSettings().setAllowContentAccess(false);
+                  web.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          return !"https".equals(request.getUrl().getScheme())
+                              || !"cutejuri.com".equals(request.getUrl().getHost());
+                      }
+                  });
+                  setContentView(web);
+                  if (state == null || web.restoreState(state) == null) {
+                      web.loadUrl("https://cutejuri.com/");
+                  }
+              }
+
+              @Override
+              protected void onSaveInstanceState(Bundle state) {
+                  web.saveState(state);
+                  super.onSaveInstanceState(state);
+              }
+
+              @Override
+              public void onBackPressed() {
+                  if (web.canGoBack()) web.goBack();
+                  else super.onBackPressed();
+              }
+          }
+          CHURI_EOF
+          cat > android/AndroidManifest.xml <<'CHURI_EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.cutejuri.app" android:versionCode="1" android:versionName="1.0">
+            <uses-sdk android:minSdkVersion="23" android:targetSdkVersion="34"/>
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <application android:label="추리주리" android:usesCleartextTraffic="false" android:allowBackup="false" android:theme="@android:style/Theme.Material.Light.NoActionBar">
+              <activity android:name=".MainActivity" android:exported="true">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
+              </activity>
+            </application>
+          </manifest>
+          CHURI_EOF
+          cat > android/build.sh <<'CHURI_EOF'
+          set -euo pipefail
+          cd "$(dirname "$0")"
+          sdk="${ANDROID_HOME:?}"
+          tools="$sdk/build-tools/35.0.0"
+          platform="$sdk/platforms/android-35/android.jar"
+          mkdir -p build/classes
+          javac --release 8 -cp "$platform" -d build/classes MainActivity.java
+          "$tools/d8" --min-api 23 --lib "$platform" --output build build/classes/com/cutejuri/app/*.class
+          "$tools/aapt2" link -I "$platform" --manifest AndroidManifest.xml -o build/base.apk
+          (cd build && zip -q base.apk classes.dex)
+          "$tools/zipalign" -f 4 build/base.apk build/aligned.apk
+          keytool -genkeypair -keystore build/debug.jks -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Churijuri Debug'
+          "$tools/apksigner" sign --ks build/debug.jks --ks-pass pass:android --out churijuri.apk build/aligned.apk
+          "$tools/apksigner" verify --verbose churijuri.apk
+          CHURI_EOF
+          bash android/build.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: churijuri-android
+          path: android/churijuri.apk
