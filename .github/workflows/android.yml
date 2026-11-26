@@ -14,7 +14,8 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - run: "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
+      - run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-35" "build-tools;35.0.0"
       - run: |
           mkdir -p android
           cat > android/MainActivity.java <<'CHURI_EOF'
