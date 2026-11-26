@@ -75,7 +75,10 @@ async function request(path, {method='GET',body,admin=false,write=false,signal}=
   if(body!==undefined)headers['Content-Type']='application/json';
   if(write)headers.Prefer='return=minimal';
   const response=await fetch(projectUrl.replace(/\/$/,'')+path,{method,headers,signal,body:body===undefined?undefined:JSON.stringify(body)});
-  if(!response.ok)throw new Error('Supabase HTTP '+response.status);
+  if(!response.ok){
+    if(path==='/rest/v1/rpc/cj_mafia'){const error=await response.json().catch(()=>({}));throw new Error(error.message||'Mafia request failed');}
+    throw new Error('Supabase HTTP '+response.status);
+  }
   if(response.status===204||response.headers.get('content-length')==='0')return;
   const payload=await response.text();
   return payload?JSON.parse(payload):undefined;
@@ -163,7 +166,7 @@ function display(html,wide=false) {
   app.innerHTML=(cloudEnabled?'<p class="panel" id="sync-notice" role="status"'+(syncError?'':' hidden')+'>최신 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요. <button type="button" class="button secondary small" data-action="refresh">다시 불러오기</button></p>':'')+html;
 }
 function home(){
-  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art detect" aria-hidden="true"><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="detect-sheet"><span class="sheet-q">?</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/cards"><div class="art sketch" aria-hidden="true"><span class="spark one">✧</span><span class="spark two">✦</span><span class="spark three">✧</span><div class="sketch-card back"></div><div class="sketch-card mid"></div><div class="sketch-card face">단어</div></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/liar"><div class="art detect" aria-hidden="true"><div class="detect-sheet"><span class="sheet-q">?</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true">›</span></div></a></div></section>',true);
+  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art detect" aria-hidden="true"><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="detect-sheet"><span class="sheet-q">?</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/cards"><div class="art sketch" aria-hidden="true"><span class="spark one">✧</span><span class="spark two">✦</span><span class="spark three">✧</span><div class="sketch-card back"></div><div class="sketch-card mid"></div><div class="sketch-card face">단어</div></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/liar"><div class="art detect" aria-hidden="true"><div class="detect-sheet"><span class="sheet-q">?</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/mafia"><div class="art detect" aria-hidden="true"><div class="detect-sheet"><span class="sheet-q">☾</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>마피아게임</h2><p>각자 휴대폰으로 접속해 같은 방에서 플레이해요.</p></div><span class="go" aria-hidden="true">›</span></div></a></div></section>',true);
 }
 function recordRow(url,icon,title,detail='',lime=false){
   return '<a href="#/'+url+'" class="row"><div class="row-main"><span class="tile'+(lime?' lime':'')+'" aria-hidden="true">'+icon+'</span><div><h2>'+escapeHTML(title)+'</h2>'+(detail?'<p>'+escapeHTML(detail)+'</p>':'')+'</div></div><span aria-hidden="true">›</span></a>';
@@ -409,6 +412,110 @@ async function saveManagedPair(form,remove=false){
   }
 }
 
+const mafiaLabels={mafia:'마피아',police:'경찰',doctor:'의사',citizen:'시민'};
+const mafiaPhases={lobby:'대기실',mafia:'밤 · 마피아 차례',doctor:'밤 · 의사 차례',police:'밤 · 경찰 차례',day:'아침 토론',vote:'낮 투표',result:'게임 결과',closed:'방 종료'};
+const mafiaRoomPattern=/^[a-f0-9-]{36}$/;
+let mafiaRooms=[], mafiaState, mafiaPolling=false, mafiaBusy=false, mafiaMessage='', mafiaLoaded=false, mafiaKey='';
+const mafiaTokenKey='churijuri.mafia.token';
+const mafiaResumeKey='churijuri.mafia.room';
+let mafiaResume='';
+try{mafiaResume=localStorage.getItem(mafiaResumeKey)||'';}catch{}
+function rememberMafiaRoom(id){
+  mafiaResume=id;
+  try{localStorage.setItem(mafiaResumeKey,id);}catch{}
+}
+let mafiaToken;
+function getMafiaToken(){
+  if(mafiaToken)return mafiaToken;
+  try{mafiaToken=localStorage.getItem(mafiaTokenKey);}catch{}
+  if(!mafiaRoomPattern.test(mafiaToken??''))mafiaToken=crypto.randomUUID();
+  try{localStorage.setItem(mafiaTokenKey,mafiaToken);}catch{}
+  return mafiaToken;
+}
+function mafiaRpc(op,id=null,data={}){
+  return request('/rest/v1/rpc/cj_mafia',{method:'POST',body:{op,rid:id,token:op==='list'?null:getMafiaToken(),data},signal:AbortSignal.timeout?.(8000)});
+}
+const mafiaButton=(action,label,style='secondary',id='')=>'<button type="button" class="button '+style+'" data-action="mafia-'+action+'" data-id="'+escapeHTML(id)+'">'+escapeHTML(label)+'</button>';
+const mafiaNick='<label>내 닉네임<input name="nick" maxlength="20" required></label>';
+function mafiaView(id){
+  const toList=back('mafia','방 목록');
+  const feedback='<p class="status" id="mafia-status" role="status">'+escapeHTML(mafiaMessage)+'</p>';
+  if(id==='new'){
+    display(toList+heading('마피아 방 만들기')+'<div class="panel"><form id="mafia-create"><label>방 이름<input name="name" maxlength="40" required></label>'+mafiaNick+'<label>진행 방식<select name="mode" class="picker-trigger"><option value="auto">자동 진행</option><option value="manual">수동 진행</option></select></label><div id="mafia-times"><label>밤 직업별 제한 시간 (초)<input type="number" name="night" min="10" max="600" value="45" required></label><label>아침 토론 시간 (초)<input type="number" name="day" min="10" max="600" value="300" required></label><label>낮 투표 시간 (초)<input type="number" name="vote" min="10" max="600" value="60" required></label></div>'+feedback+'<button class="button purple full">방 만들기</button></form></div>');
+    return;
+  }
+  if(!mafiaRoomPattern.test(id??'')){
+    const rooms=mafiaRooms.map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 12명 · '+(r.mode==='auto'?'자동':'수동')+' 진행</p></div>'+(mafiaResume===r.id?'<a class="button secondary small" href="#/mafia/'+r.id+'">복귀</a>':r.phase==='lobby'&&r.players<12?'<a class="button secondary small" href="#/mafia/'+r.id+'">입장</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>')+'</div>').join('');
+    display(back('','게임 선택')+heading('마피아게임','각자 폰으로 같은 방에 들어와 플레이해요.')+'<a class="button purple full" href="#/mafia/new">방 만들기</a>'+feedback+'<div class="stack bottom-action">'+(rooms||'<p class="empty">'+(mafiaLoaded?'개설된 방이 없어요.':'방 목록을 불러오는 중이에요.')+'</p>')+'</div>');
+    return;
+  }
+  const r=mafiaState;
+  if(r?.id!==id){
+    const room=mafiaRooms.find(item=>item.id===id);
+    display(toList+heading(room?.name??'마피아 방 입장')+'<div class="panel"><form id="mafia-join">'+mafiaNick+feedback+'<button class="button purple full">입장하기</button></form></div>');
+    return;
+  }
+  if(r.phase==='closed'){
+    display(toList+heading('방이 종료됐어요','방장이 이 방을 종료했어요.'));
+    return;
+  }
+  const acting=r.alive&&(r.phase===r.role||r.phase==='vote');
+  const prompt={mafia:'공격할 사람을 고르세요.',doctor:'보호할 사람을 고르세요.',police:'조사할 사람을 고르세요.',vote:'탈락시킬 사람에게 투표하세요.'};
+  const players=r.players.map(p=>{
+    const canChoose=acting&&p.alive&&(r.phase!=='mafia'||p.role!=='mafia')&&(!['vote','police'].includes(r.phase)||p.id!==r.me);
+    return '<div class="row"><h2>'+escapeHTML(p.nick)+(p.id===r.me?' · 나':'')+(p.alive?'':' · 탈락')+(p.role?' · '+mafiaLabels[p.role]:'')+'</h2>'+(canChoose?mafiaButton('choose',r.choice===p.id?'선택됨':'선택',r.choice===p.id?'purple':'secondary',p.id):'')+'</div>';
+  }).join('');
+  const detail=r.phase==='result'?r.winner+' 승리':!r.alive?'탈락했어요. 결과를 지켜봐 주세요.':acting?prompt[r.phase]:r.phase==='day'?'살아남은 참가자끼리 말로 토론하세요.':r.phase==='lobby'?'4~12명이 모이면 방장이 게임을 시작해요.':'다른 참가자의 차례예요.';
+  const commands=r.host?'<div class="actions bottom-action">'+(r.phase==='lobby'?mafiaButton('start','게임 시작','purple'):r.mode==='manual'&&r.phase!=='result'?mafiaButton('next','다음 단계','purple'):'')+mafiaButton('close','방 종료')+'</div>':'';
+  display(toList+heading(r.name,mafiaPhases[r.phase])+'<section class="panel"><h2>'+escapeHTML(detail)+'</h2>'+(r.role?'<p>내 직업 · '+mafiaLabels[r.role]+(r.alive?'':' · 탈락')+'</p>':'')+(r.role==='police'&&r.intel?'<p>최근 조사 결과 · '+escapeHTML(r.intel)+'</p>':'')+(r.message?'<p>'+escapeHTML(r.message)+'</p>':'')+(r.deadline?'<p id="mafia-clock" role="timer"></p>':'')+'</section>'+commands+feedback+'<div class="stack bottom-action">'+players+'</div>');
+  updateMafiaClock();
+}
+function updateMafiaClock(){
+  const clock=document.querySelector('#mafia-clock');
+  if(!clock||!mafiaState?.deadline)return;
+  const seconds=Math.max(0,Math.ceil((Date.parse(mafiaState.deadline)-Date.now())/1000));
+  clock.textContent='남은 시간 · '+Math.floor(seconds/60)+':'+String(seconds%60).padStart(2,'0');
+}
+function mafiaError(error){
+  const labels={'Nickname used':'이미 사용 중인 닉네임이에요.','Room unavailable':'입장할 수 없는 방이에요.','Need 4 players':'최소 4명이 필요해요.','Invalid target':'선택할 수 없는 참가자예요.'};
+  mafiaMessage=labels[error.message]??'연결 상태를 확인하고 다시 시도해 주세요.';
+  const status=document.querySelector('#mafia-status');
+  if(status)status.textContent=mafiaMessage;
+}
+async function mafiaPoll(){
+  const [page,id]=route();
+  if(page!=='mafia'||id==='new'||mafiaBusy||mafiaPolling)return;
+  const key=location.hash;
+  mafiaPolling=true;
+  try{
+    if(mafiaRoomPattern.test(id??'')){
+      const state=await mafiaRpc('state',id);
+      if(location.hash!==key||mafiaBusy)return;
+      if(JSON.stringify(state)!==JSON.stringify(mafiaState)){mafiaState=state;mafiaMessage='';render();}
+    }else{
+      const rooms=await mafiaRpc('list');
+      if(location.hash!==key||mafiaBusy)return;
+      if(!mafiaLoaded||JSON.stringify(rooms)!==JSON.stringify(mafiaRooms)){mafiaRooms=rooms;mafiaLoaded=true;mafiaMessage='';render();}
+    }
+  }catch(error){
+    if(location.hash===key&&error.message!=='Join first')mafiaError(error);
+  }finally{mafiaPolling=false;}
+}
+async function mafiaCommand(op,id,data={},control){
+  if(mafiaBusy)return;
+  const key=location.hash;
+  mafiaBusy=true;
+  if(control)control.disabled=true;
+  try{
+    const state=await mafiaRpc(op,id,data);
+    if(location.hash!==key)return;
+    mafiaMessage='';
+    if(op==='create'){rememberMafiaRoom(state.id);location.hash='/mafia/'+state.id;}
+    else{if(op==='join')rememberMafiaRoom(state.id);mafiaState=state;render();}
+  }catch(error){if(location.hash===key)mafiaError(error);}
+  finally{mafiaBusy=false;if(control)control.disabled=false;}
+}
+
 function render(){
   clearTimeout(timeout);
   readRecoveryLink();
@@ -424,7 +531,10 @@ function render(){
   if(page==='admin')adminLink.setAttribute('aria-current','page');
   else adminLink.removeAttribute('aria-current');
   if(page!=='liar'||id!=='play')liarRound=null;
-  if(page==='liar')liarGame(id);
+  if(page==='mafia'){
+    if(location.hash!==mafiaKey){mafiaKey=location.hash;mafiaMessage='';}
+    mafiaView(id);
+  }else if(page==='liar')liarGame(id);
   else if(page==='reset')resetPage();
   else if(page==='mysteries')mysteries(id);
   else if(page==='admin')admin(id);
@@ -442,6 +552,7 @@ app.addEventListener('input', event=>{
   if(event.target.name==='words')document.querySelector('#word-count').textContent=parseWords(event.target.value).length+'개';
 });
 app.addEventListener('change',event=>{
+  if(event.target.name==='mode'&&event.target.form?.id==='mafia-create'){document.querySelector('#mafia-times').hidden=event.target.value==='manual';return;}
   if(event.target.name!=='manage-category')return;
   managedCategory=event.target.value;
   app.querySelector('#liar-admin-search').value='';
@@ -454,6 +565,10 @@ app.addEventListener('submit',async event=>{
   const form=event.target;
   const fields=new FormData(form);
   const value=key=>String(fields.get(key)??'').trim();
+  if(form.id==='mafia-create'||form.id==='mafia-join'){
+    await mafiaCommand(form.id==='mafia-create'?'create':'join',route()[1]==='new'?null:route()[1],Object.fromEntries(fields),form.querySelector('button'));
+    return;
+  }
   if(form.id==='liar-manage'){await saveManagedPair(form);return;}
   if(form.id==='liar-setup'){await startLiar(form,fields);return;}
   if(form.id==='liar-vote'&&liarRound?.phase==='vote'){
@@ -525,6 +640,12 @@ app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
+  if(action.startsWith('mafia-')){
+    const op=action.slice(6);
+    if(op==='close'&&!confirm('모든 참가자의 방을 종료할까요?'))return;
+    await mafiaCommand(op,route()[1],{target:id,phase:mafiaState?.phase},button);
+    return;
+  }
   if(action==='liar-edit'&&!mutationPending){
     const pair=managedRows[Number(id)];
     if(!pair)return;
@@ -596,7 +717,9 @@ app.addEventListener('click',async event=>{
     else issue(saveError());
   }
 });
-window.addEventListener('hashchange',()=>{render();refreshPage();});
+window.addEventListener('hashchange',()=>{render();refreshPage();mafiaPoll();});
+setInterval(()=>{updateMafiaClock();mafiaPoll();},1250);
+mafiaPoll();
 window.addEventListener('online',refreshPage);
 window.addEventListener('storage',()=>{if(route()[2]!=='play'&&!app.querySelector('form'))render();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(document.querySelector('#clock'))updateClock();refreshPage();}});
