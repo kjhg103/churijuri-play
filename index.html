@@ -32,6 +32,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .picker-option{border-color:transparent;background:#f6f3fa}
 .picker-option[aria-pressed=true]{background:#eae1ff;border-color:#c4aff8;color:#4e32a4}
 @media(max-width:600px){.picker-dialog{width:100%;max-width:100%;margin:auto 0 0;border-radius:24px 24px 0 0}}
+#liar-manage button[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -264,9 +265,10 @@ function admin(id){
     display(back('','게임 선택')+heading('관리자 로그인')+'<div class="panel"><form id="admin-form"><label>이메일<input type="email" name="email" autocomplete="username" required></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required></label>'+status+'<button class="button purple full">로그인</button></form></div>');
     return;
   }
+  if(id==='liar'){managedPair=null;liarAdmin();return;}
   const list=records('mysteries');
   if(!id){
-    display(back('','게임 선택')+heading('추리 문제 관리','바다거북 수프에 표시할 문제와 정답을 관리해요.')+(cloudEnabled?'<div class="actions end bottom-action"><button class="button secondary small" data-action="logout">로그아웃</button></div>':'')+'<div class="stack">'+(list.map((m,i)=>'<div class="row"><div class="row-main"><div><h2>'+escapeHTML(m.title)+'</h2></div></div><div class="table-actions"><button class="button secondary small" data-action="up" data-id="'+m.id+'" '+(i===0?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 위로 이동">↑</button><button class="button secondary small" data-action="down" data-id="'+m.id+'" '+(i===list.length-1?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 아래로 이동">↓</button><a class="button secondary small" href="#/admin/'+m.id+'">수정</a></div></div>').join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>'+status+'<a class="button full bottom-action" href="#/admin/new">＋ 추리 문제 추가</a>');
+    display(back('','게임 선택')+heading('추리 문제 관리','바다거북 수프에 표시할 문제와 정답을 관리해요.')+(cloudEnabled?'<div class="actions end bottom-action"><a class="button secondary small" href="#/admin/liar">라이어게임 키워드 관리</a><button class="button secondary small" data-action="logout">로그아웃</button></div>':'')+'<div class="stack">'+(list.map((m,i)=>'<div class="row"><div class="row-main"><div><h2>'+escapeHTML(m.title)+'</h2></div></div><div class="table-actions"><button class="button secondary small" data-action="up" data-id="'+m.id+'" '+(i===0?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 위로 이동">↑</button><button class="button secondary small" data-action="down" data-id="'+m.id+'" '+(i===list.length-1?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 아래로 이동">↓</button><a class="button secondary small" href="#/admin/'+m.id+'">수정</a></div></div>').join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>'+status+'<a class="button full bottom-action" href="#/admin/new">＋ 추리 문제 추가</a>');
     return;
   }
   const existing=list.find(m=>m.id===id);
@@ -314,11 +316,13 @@ async function startLiar(form,fields){
   try{
     if(cloudEnabled&&navigator.onLine){
       const rows=await request('/rest/v1/churijuri_liar_pairs?select=word_a,word_b&category=eq.'+encodeURIComponent(category),{signal:AbortSignal.timeout(2500)});
-      if(rows?.length>1)pairs=rows.map(row=>[row.word_a,row.word_b]);
+      if(Array.isArray(rows))pairs=rows.map(row=>[row.word_a,row.word_b]);
     }
   }catch{}finally{button.disabled=false;}
   if(!form.isConnected)return;
-  const pool=pairs.filter(pair=>JSON.stringify([...pair].sort())!==liarPrevious.get(category));
+  if(!pairs.length){issue('이 카테고리에 단어 쌍이 없어요. 다른 카테고리를 골라 주세요.');return;}
+  const unused=pairs.filter(pair=>JSON.stringify([...pair].sort())!==liarPrevious.get(category));
+  const pool=unused.length?unused:pairs;
   const pair=pool[Math.floor(Math.random()*pool.length)];
   liarPrevious.set(category,JSON.stringify([...pair].sort()));
   const swap=Math.random()<0.5?0:1;
@@ -326,6 +330,76 @@ async function startLiar(form,fields){
   liarSetup.category=choice;
   liarRound={count,index:0,phase:'pass',revealed:false,liar:Math.floor(Math.random()*count),common:pair[swap],secret:pair[1-swap]};
   location.hash='/liar/play';
+}
+
+const liarTable='/rest/v1/churijuri_liar_pairs';
+let managedCategory='게임';
+let managedRows=[];
+let managedPair=null;
+let manageLoad=0;
+const categoryFilter=category=>'?category=eq.'+encodeURIComponent('"'+category+'"');
+const pairFilter=(category,pair)=>categoryFilter(category)+'&word_a=eq.'+encodeURIComponent('"'+pair.word_a.replace(/["\\]/g,'\\$&')+'"')+'&word_b=eq.'+encodeURIComponent('"'+pair.word_b.replace(/["\\]/g,'\\$&')+'"');
+
+function liarAdmin(){
+  const options=Object.keys(liarPairs).map(category=>'<option'+(category===managedCategory?' selected':'')+'>'+escapeHTML(category)+'</option>').join('');
+  display(back('admin','추리 문제 관리')+heading('라이어게임 키워드 관리')+'<div class="panel"><form id="liar-manage"><label>카테고리<select name="manage-category" class="picker-trigger">'+options+'</select></label><label>단어 1<input name="word_a" maxlength="60" required></label><label>단어 2<input name="word_b" maxlength="60" required></label>'+status+'<div class="actions"><button type="submit" class="button purple">단어 쌍 추가</button><button type="button" class="button secondary" data-action="liar-edit-cancel" hidden>수정 취소</button><button type="button" class="button secondary" data-action="liar-remove" hidden>삭제</button></div></form></div><div id="liar-admin-list" class="stack bottom-action" aria-live="polite"></div>');
+  loadManagedPairs();
+}
+
+async function loadManagedPairs(){
+  const list=app.querySelector('#liar-admin-list');
+  const version=++manageLoad;
+  managedRows=[];
+  list.textContent='목록을 불러오는 중이에요.';
+  try{
+    const rows=await request(liarTable+categoryFilter(managedCategory)+'&order=word_a.asc,word_b.asc');
+    if(version!==manageLoad||!list.isConnected)return;
+    managedRows=rows;
+    list.innerHTML='<p>'+rows.length+'쌍</p>'+rows.map((row,i)=>'<div class="row"><h2>'+escapeHTML(row.word_a)+' · '+escapeHTML(row.word_b)+'</h2><button type="button" class="button secondary small" data-action="liar-edit" data-id="'+i+'" aria-label="'+escapeHTML(row.word_a+' · '+row.word_b+' 수정')+'">수정</button></div>').join('');
+  }catch{
+    if(version===manageLoad&&list.isConnected)list.textContent='목록을 불러오지 못했어요. 페이지를 새로고침해 주세요.';
+  }
+}
+
+function selectManagedPair(pair){
+  const form=app.querySelector('#liar-manage');
+  managedPair=pair;
+  form.elements.word_a.value=pair?.word_a??'';
+  form.elements.word_b.value=pair?.word_b??'';
+  form.querySelector('[type=submit]').textContent=pair?'수정 저장':'단어 쌍 추가';
+  for(const control of form.querySelectorAll('[data-action]'))control.hidden=!pair;
+}
+
+async function saveManagedPair(form,remove=false){
+  if(!isAdmin()){issue('다시 로그인해 주세요.');return;}
+  if(mutationPending)return;
+  const pair=managedPair;
+  if(remove&&!pair)return;
+  const word_a=form.elements.word_a.value.trim();
+  const word_b=form.elements.word_b.value.trim();
+  if(!remove&&(!word_a||!word_b||word_a===word_b)){issue('서로 다른 두 단어를 입력해 주세요.');return;}
+  if(!remove&&managedRows.some(row=>row!==pair&&((row.word_a===word_a&&row.word_b===word_b)||(row.word_a===word_b&&row.word_b===word_a)))){
+    issue('이미 등록된 단어 쌍이에요.');return;
+  }
+  const category=managedCategory;
+  mutationPending=true;
+  const controls=[...form.elements];
+  for(const control of controls)control.disabled=true;
+  try{
+    await request(liarTable+(pair?pairFilter(category,pair):''),{
+      method:remove?'DELETE':pair?'PATCH':'POST',admin:true,write:true,
+      body:remove?undefined:pair?{word_a,word_b}:{category,word_a,word_b}
+    });
+    if(!form.isConnected)return;
+    selectManagedPair(null);
+    issue(remove?'단어 쌍을 삭제했어요.':'단어 쌍을 저장했어요.');
+    await loadManagedPairs();
+  }catch{
+    if(form.isConnected)issue('변경을 저장하지 못했어요. 연결과 관리자 로그인 상태를 확인해 주세요.');
+  }finally{
+    mutationPending=false;
+    for(const control of controls)control.disabled=false;
+  }
 }
 
 function render(){
@@ -359,11 +433,19 @@ const parseWords = value => value.split(/\r\n|\r|\n/).map(word=>word.trim()).fil
 app.addEventListener('input', event=>{
   if(event.target.name==='words')document.querySelector('#word-count').textContent=parseWords(event.target.value).length+'개';
 });
+app.addEventListener('change',event=>{
+  if(event.target.name!=='manage-category')return;
+  managedCategory=event.target.value;
+  selectManagedPair(null);
+  issue('');
+  loadManagedPairs();
+});
 app.addEventListener('submit',async event=>{
   event.preventDefault();
   const form=event.target;
   const fields=new FormData(form);
   const value=key=>String(fields.get(key)??'').trim();
+  if(form.id==='liar-manage'){await saveManagedPair(form);return;}
   if(form.id==='liar-setup'){await startLiar(form,fields);return;}
   if(form.id==='liar-vote'&&liarRound?.phase==='vote'){
     const selected=fields.get('vote');
@@ -434,7 +516,18 @@ app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
-  if(action==='open-category'){
+  if(action==='liar-edit'&&!mutationPending){
+    const pair=managedRows[Number(id)];
+    if(!pair)return;
+    selectManagedPair(pair);
+    issue('');
+    app.querySelector('#liar-manage [name=word_a]').focus();
+  }else if(action==='liar-edit-cancel'){
+    selectManagedPair(null);
+    issue('');
+  }else if(action==='liar-remove'&&managedPair&&confirm('이 단어 쌍을 삭제할까요?')){
+    await saveManagedPair(app.querySelector('#liar-manage'),true);
+  }else if(action==='open-category'){
     const picker=app.querySelector('#category-picker');
     picker.showModal();
     picker.querySelector('[aria-pressed="true"]')?.focus();
