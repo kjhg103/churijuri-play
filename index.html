@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f8f7f2">
+<meta name="color-scheme" content="only light">
+<title>추리주리</title>
+<style>
+:root{--paper:#f8f7f2;--ink:#24211f;--line:#dfdbd2;--muted:#68625d;--violet:#5635b5;--lavender:#eae1ff;--lime:#e8f598;--white:#fffefa;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Noto Sans KR","Apple SD Gothic Neo",sans-serif;color:var(--ink);background-color:var(--paper);color-scheme:only light;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background-color:var(--paper);color:var(--ink)}button,input,textarea{font:inherit}button,a{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button:disabled{cursor:default;opacity:.48}a{color:inherit;text-decoration:none}button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid #8154e9;outline-offset:3px}p{line-height:1.65;word-break:keep-all}h1,h2,h3,p{margin:0}h1,h2,h3{letter-spacing:-.065em;word-break:keep-all}
+.top{border-bottom:1px solid var(--line)}.top-inner,.foot-inner{max-width:1120px;margin:auto;padding:18px 28px;display:flex;align-items:center;justify-content:space-between;gap:14px}.logo{display:inline-flex;align-items:center;gap:10px;font-weight:900;font-size:23px;letter-spacing:-.07em}.mark{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:#272128;color:#efe2ff;font-size:23px;line-height:1;transform:rotate(-6deg)}.manage,.crumb{border:1px solid var(--line);border-radius:100px;padding:8px 14px;font-weight:750;font-size:14px;background:var(--white)}.manage[aria-current]{background:var(--ink);color:white;border-color:var(--ink)}
+.wrap{max-width:1120px;padding:62px 28px 76px;margin:auto;min-height:calc(100svh - 145px)}.wrap.narrow{max-width:780px}.home h1{font-size:clamp(42px,7vw,78px);line-height:1.09}.home .intro{padding-bottom:39px}.subtitle{color:var(--muted);margin-top:14px;font-size:17px}.games{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.game{border:1.5px solid var(--ink);border-radius:26px;overflow:hidden;background:var(--white);transition:transform .18s,box-shadow .18s;display:flex;flex-direction:column}.game:hover{transform:translateY(-4px);box-shadow:0 7px 0 var(--ink)}.game:active{transform:translateY(1px);box-shadow:none}.art{position:relative;display:grid;place-items:center;height:220px;overflow:hidden;border-bottom:1.5px solid var(--ink);isolation:isolate}.art.detect{background:#e5d8ff}.art.sketch{background:#e8f49c}.art:before{content:"";position:absolute;inset:0;background-image:radial-gradient(#2d2436 1px,transparent 1px);background-size:17px 17px;opacity:.19;mask-image:linear-gradient(90deg,#000,transparent 48%,#000)}.spark{position:absolute;color:var(--ink);font-size:30px;line-height:1}.spark.one{left:16%;top:25%}.spark.two{right:17%;bottom:26%;font-size:23px}.spark.three{right:22%;top:15%;font-size:19px}.detect-sheet{position:absolute;width:114px;height:144px;border:2px solid var(--ink);border-radius:10px;background:#fffaf4;transform:rotate(-13deg) translate(-25px,5px);box-shadow:6px 6px 0 #a68bdc;padding:23px 18px;color:#47316c}.sheet-q{font-size:42px;font-weight:950;line-height:1}.detect-sheet b{display:block;height:2px;background:#a996c2;margin-top:11px;border-radius:4px}.detect-sheet b:last-child{width:70%}.lens{position:absolute;border:9px solid #28212d;border-radius:50%;background:#ac92e968;width:97px;height:97px;transform:translate(39px,-8px) rotate(-36deg);box-shadow:inset 0 0 0 3px #f1e7ff}.lens:after{content:"";position:absolute;width:18px;height:60px;background:#28212d;border-radius:8px;left:31px;top:74px}.lens:before{content:"";position:absolute;border:3px solid white;border-color:white transparent transparent transparent;border-radius:50%;width:43px;height:32px;left:17px;top:9px;transform:rotate(15deg)}.sketch-card{position:absolute;border:2px solid var(--ink);width:153px;height:108px;border-radius:13px}.sketch-card.back{background:#f9ba9c;transform:rotate(-16deg) translate(-20px,-8px)}.sketch-card.mid{background:#cdb2ff;transform:rotate(15deg) translate(20px,-10px)}.sketch-card.face{background:#fffaf4;transform:rotate(-5deg) translate(0,9px);box-shadow:4px 4px 0 #25211d;display:grid;place-items:center;padding-top:10px;font-size:36px;font-weight:950;letter-spacing:-.1em}.sketch-card.face:before{content:"●   ●   ●   ●";position:absolute;top:7px;font-size:11px;letter-spacing:6px}.game-copy{padding:22px 23px 24px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex:1}.game h2{font-size:clamp(24px,4vw,32px)}.game p{font-size:15px;color:var(--muted);margin-top:5px}.go{display:grid;place-items:center;flex:0 0 39px;height:39px;border-radius:50%;background:var(--ink);color:white;font-size:25px}
+.foot{border-top:1px solid var(--line);color:var(--muted);font-size:14px}.foot-inner{padding-top:15px;padding-bottom:15px;justify-content:flex-start}.foot .mark{width:23px;height:23px;font-size:14px;border-radius:7px}
+.page-head{margin:18px 0 28px}.page-head h1{font-size:clamp(35px,6vw,58px);line-height:1.16}.crumb{display:inline-block}.stack{display:grid;gap:12px}.row{padding:17px 19px;display:flex;align-items:center;justify-content:space-between;gap:14px;background:var(--white);border:1px solid var(--line);border-radius:17px}.row[href]:hover{border-color:var(--violet)}.row h2{font-size:20px;line-height:1.35;overflow-wrap:anywhere}.row p{font-size:14px;margin-top:3px;color:var(--muted);overflow-wrap:anywhere}.row-main{min-width:0;display:flex;gap:14px;align-items:center}.tile{width:42px;height:42px;border-radius:11px;background:var(--lavender);display:grid;place-items:center;flex:none;font-size:21px;font-weight:850}.tile.lime{background:var(--lime)}
+.panel{padding:clamp(19px,4vw,30px);border:1px solid var(--line);background:var(--white);border-radius:22px;margin-bottom:14px}.panel[hidden]{display:none}.panel h2{font-size:24px;margin-bottom:10px}.panel p{white-space:pre-wrap;overflow-wrap:anywhere}.answer{background:var(--lavender);border-color:#cab8f0}.button{min-height:47px;display:inline-flex;justify-content:center;align-items:center;gap:7px;background:var(--ink);color:white;border:1px solid var(--ink);padding:10px 18px;border-radius:13px;font-weight:800;text-align:center}.button:hover{filter:brightness(1.2)}.button.secondary{background:var(--white);color:var(--ink);border-color:var(--line)}.button.purple{background:var(--violet);border-color:var(--violet)}.button.danger{background:var(--white);color:#a83038;border-color:var(--line)}.button.full{width:100%}.bottom-action{margin-top:20px}.actions{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.actions.end{justify-content:flex-end}.small{min-height:39px;padding:7px 12px;font-size:14px}
+form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight:760}input,textarea{width:100%;border:1px solid var(--line);border-radius:11px;padding:12px 13px;background:#fff;color:var(--ink);line-height:1.4}textarea{resize:vertical;min-height:108px}textarea.words{min-height:195px}.hint{font-weight:500;color:var(--muted);font-size:14px}.countline{display:flex;justify-content:space-between;gap:10px}.duration{max-width:160px}.presets{display:flex;gap:7px;flex-wrap:wrap}
+.play-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:17px 0 14px}.play-head h1{font-size:clamp(24px,4vw,34px);overflow-wrap:anywhere}.clock{background:var(--ink);color:white;border-radius:12px;padding:8px 12px;font-size:22px;font-weight:850;font-variant-numeric:tabular-nums}.clock.urgent{background:#a83038}.progress{height:7px;overflow:hidden;background:#e7e3da;border-radius:20px;margin-bottom:15px}.progress span{display:block;height:100%;background:var(--violet);transition:width .2s}.word-card{position:relative;width:100%;min-height:clamp(270px,52svh,530px);border:2px solid var(--ink);border-radius:24px;background:var(--lime);display:grid;align-content:center;justify-items:center;text-align:center;padding:24px 20px;color:var(--ink);box-shadow:0 5px 0 var(--ink);touch-action:manipulation}.word-card strong{font-size:clamp(40px,9vw,100px);line-height:1.14;letter-spacing:-.07em;overflow-wrap:anywhere;max-width:100%}.word-card span{font-size:15px;margin-top:18px;font-weight:700}.play-bottom{margin-top:19px;display:flex;justify-content:space-between;align-items:center;color:var(--muted);gap:12px}.result{text-align:center;padding:60px 20px;background:var(--lime);border:1.5px solid var(--ink)}.result h1{font-size:clamp(38px,7vw,65px);margin-bottom:8px}.result .actions{justify-content:center;margin-top:22px}.empty{color:var(--muted);padding:17px}.status{color:var(--violet);font-size:14px;min-height:0}.status:empty{display:none}.table-actions{display:flex;gap:6px;flex-shrink:0}
+@media(max-width:650px){.top-inner,.foot-inner{padding-left:19px;padding-right:19px}.wrap{padding:32px 18px 45px;min-height:calc(100svh - 129px)}.home .intro{padding-bottom:25px}.games{grid-template-columns:1fr;gap:15px}.art{height:158px}.art .detect-sheet,.art .lens,.art .sketch-card{scale:.8}.game-copy{padding:16px 17px}.subtitle{font-size:15px;margin-top:10px}.row{padding:13px 12px}.row-main{gap:9px}.tile{width:36px;height:36px}.row h2{font-size:17px}.manage{font-size:13px}.word-card strong{font-size:clamp(34px,12vw,72px)}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top"><div class="top-inner"><a href="#/" class="logo"><span class="mark" aria-hidden="true">✦</span>추리주리</a><a href="#/admin" class="manage" id="admin-link">관리 웹</a></div></header>
+<main id="app" class="wrap"></main>
+<footer class="foot"><div class="foot-inner"><span class="mark" aria-hidden="true">✦</span>추리주리</div></footer>
+<script>
+const seedMysteries = [
+  {id:'m1',title:'생일 촛불',question:'케이크 위의 초에는 10이라는 숫자가 적혀 있었다. 케이크의 주인공 민서는 일곱 살인데, 가족들은 오늘 민서를 위해 10이라는 숫자를 골랐다. 왜였을까?',answer:'민서는 반려견이다. 가족들은 민서의 생일 대신 입양한 날을 기념하고 있었다. 10은 나이가 아니라 입양한 날짜인 10일을 뜻했다.'},
+  {id:'m2',title:'젖은 우산',question:'비 한 방울 내리지 않은 날, 지훈은 우산을 펴고 집을 나섰다. 집에 도착했을 때 우산은 흠뻑 젖어 있었다. 무슨 일이 있었을까?',answer:'지훈은 물총 놀이를 하는 동네 축제에 갔다. 우산을 방패처럼 펼친 채 물총 세례를 받았다.'},
+  {id:'m3',title:'한밤중의 박수',question:'불이 꺼진 방에 들어간 수아가 손뼉을 두 번 치자, 방 안의 사람들이 모두 안심했다. 왜였을까?',answer:'정전으로 어두워진 연습실에서 사람들은 출입구 위치를 찾고 있었다. 문에 도착한 수아가 약속한 신호로 손뼉을 쳐서 출입구를 알려준 것이다.'}
+];
+const seedSets = [
+  {id:'s1',title:'몸으로 말해요',author:'추리주리',words:['고양이','피아노','선풍기','우산','롤러코스터','로봇','드럼','문어','줄넘기','헬리콥터','토끼','볼링','엘리베이터','청소기','펭귄','축구','거미','트램펄린','기타','기린']},
+  {id:'s2',title:'먹을거리',author:'추리주리',words:['붕어빵','떡볶이','김밥','초밥','타코','크루아상','팥빙수','피자','만두','쌀국수','짬뽕','콜라','샌드위치','닭강정','순두부','수박','멜론','아이스크림','카레','호떡']}
+];
+const app = document.querySelector('#app');
+const adminLink = document.querySelector('#admin-link');
+const keys = {mysteries:'churijuri.v1.mysteries',sets:'churijuri.v1.sets'};
+const datasets = {mysteries:seedMysteries,sets:seedSets};
+const projectUrl = 'https://fpwivbuzsyzhbmupvlxh.supabase.co'; // Supabase Project URL
+const publishableKey = 'sb_publishable_kgBbUfR-1nW_rWc0ygOxWA_OmEdW6UJ'; // Supabase publishable key
+const cloudEnabled = Boolean(projectUrl && publishableKey);
+const tables = {mysteries:'churijuri_mysteries',sets:'churijuri_card_sets'};
+const sessionKey = 'churijuri.admin:'+projectUrl;
+const cloudCache = {};
+let adminSession;
+try { adminSession = JSON.parse(sessionStorage.getItem(sessionKey)); } catch {}
+let syncPending;
+let syncError = false;
+let mutationPending = false;
+const isAdmin = () => Boolean(adminSession?.user?.app_metadata?.churijuri_admin === true && adminSession.expires_at > Date.now()/1000);
+const cacheKey = type => keys[type]+':'+projectUrl;
+async function request(path, {method='GET',body,admin=false,write=false}={}) {
+  const headers = {apikey:publishableKey};
+  if(admin){
+    if(!isAdmin())throw new Error('관리자 로그인이 필요해요.');
+    headers.Authorization='Bearer '+adminSession.access_token;
+  }
+  if(body!==undefined)headers['Content-Type']='application/json';
+  if(write)headers.Prefer='return=minimal';
+  const response=await fetch(projectUrl.replace(/\/$/,'')+path,{method,headers,body:body===undefined?undefined:JSON.stringify(body)});
+  if(!response.ok)throw new Error('Supabase HTTP '+response.status);
+  if(response.status===204||response.headers.get('content-length')==='0')return;
+  const payload=await response.text();
+  return payload?JSON.parse(payload):undefined;
+}
+function refreshCloud(){
+  if(!cloudEnabled)return Promise.resolve();
+  if(syncPending)return syncPending;
+  syncPending=Promise.all([
+    request('/rest/v1/'+tables.mysteries+'?select=id,title,question,answer&order=sort_order.asc'),
+    request('/rest/v1/'+tables.sets+'?select=id,title,author,words&order=created_at.asc,id.asc')
+  ]).then(([mysteries,sets])=>{
+    syncError=false;
+    for(const [type,items] of Object.entries({mysteries,sets})){
+      cloudCache[type]=items;
+      try {localStorage.setItem(cacheKey(type),JSON.stringify(items));} catch {}
+    }
+  }).catch(()=>{syncError=true;}).finally(()=>{syncPending=null;});
+  return syncPending;
+}
+function refreshPage(){
+  if(!cloudEnabled)return;
+  refreshCloud().then(()=>{
+    if(route()[2]!=='play'&&!app.querySelector('form'))render();
+    else updateSyncStatus();
+  });
+}
+function updateSyncStatus(){
+  const notice=document.querySelector('#sync-notice');
+  if(notice)notice.hidden=!syncError;
+}
+async function storeChange(type,list,change){
+  if(!cloudEnabled)return save(type,list);
+  if(mutationPending)return false;
+  mutationPending=true;
+  const control=app.querySelector('button[type=submit],form button:not([type])');
+  if(control)control.disabled=true;
+  try{
+    if(syncPending)await syncPending;
+    const table='/rest/v1/'+tables[type];
+    const filter='?id=eq.'+encodeURIComponent(change.id);
+    if(change.method==='MOVE'){
+      await request('/rest/v1/rpc/churijuri_move_mystery',{method:'POST',body:{item_id:change.id,move_up:change.up},admin:true,write:true});
+    }else{
+      const path=change.method==='POST'?table:table+filter;
+      await request(path,{method:change.method,body:change.body,admin:type==='mysteries'||change.method==='DELETE',write:true});
+    }
+    cloudCache[type]=list;
+    await refreshCloud();
+    return true;
+  }catch{
+    return false;
+  }finally{
+    mutationPending=false;
+    if(control)control.disabled=false;
+  }
+}
+const saveError = () => cloudEnabled?'저장하지 못했어요. 인터넷 연결과 권한을 확인해 주세요.':'저장 공간을 확인해 주세요.';
+
+function records(type) {
+  if(cloudEnabled){
+    if(cloudCache[type])return cloudCache[type];
+    try {return JSON.parse(localStorage.getItem(cacheKey(type)))??[];} catch {return [];}
+  }
+  try { return JSON.parse(localStorage.getItem(keys[type])) ?? datasets[type]; }
+  catch { return datasets[type]; }
+}
+function save(type, list) {
+  try { localStorage.setItem(keys[type],JSON.stringify(list)); return true; }
+  catch { return false; }
+}
+const escapeHTML = value => String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+const makeId = () => globalThis.crypto?.randomUUID?.() ?? Date.now().toString(36)+'-'+Math.random().toString(36).slice(2);
+const route = () => location.hash.slice(1).split('/').filter(Boolean);
+const back = (to,label) => '<a class="crumb" href="#/'+to+'">‹ '+label+'</a>';
+const heading = (title,description='') => '<div class="page-head"><h1>'+escapeHTML(title)+'</h1>'+(description?'<p class="subtitle">'+escapeHTML(description)+'</p>':'')+'</div>';
+const status = '<p class="status" role="status" id="status"></p>';
+const issue = message => {const target=document.querySelector('#status');if(target)target.textContent=message;};
+let answerVisible = false;
+let game = null;
+let timeout = null;
+let audioContext;
+let previousRoute = '';
+function display(html,wide=false) {
+  app.className='wrap'+(wide?'':' narrow');
+  app.innerHTML=(cloudEnabled?'<p class="panel" id="sync-notice" role="status"'+(syncError?'':' hidden')+'>최신 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요. <button type="button" class="button secondary small" data-action="refresh">다시 불러오기</button></p>':'')+html;
+}
+function home(){
+  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art detect" aria-hidden="true"><span class="spark one">✦</span><span class="spark two">✧</span><span class="spark three">✦</span><div class="detect-sheet"><span class="sheet-q">?</span><b></b><b></b></div><div class="lens"></div></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true">›</span></div></a><a class="game" href="#/cards"><div class="art sketch" aria-hidden="true"><span class="spark one">✧</span><span class="spark two">✦</span><span class="spark three">✧</span><div class="sketch-card back"></div><div class="sketch-card mid"></div><div class="sketch-card face">단어</div></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true">›</span></div></a></div></section>',true);
+}
+function recordRow(url,icon,title,detail='',lime=false){
+  return '<a href="#/'+url+'" class="row"><div class="row-main"><span class="tile'+(lime?' lime':'')+'" aria-hidden="true">'+icon+'</span><div><h2>'+escapeHTML(title)+'</h2>'+(detail?'<p>'+escapeHTML(detail)+'</p>':'')+'</div></div><span aria-hidden="true">›</span></a>';
+}
+function mysteries(id){
+  const list=records('mysteries');
+  if(!id){
+    display(back('','게임 선택')+heading('바다거북 수프','문제를 읽고, 예 또는 아니오로 답할 수 있는 질문을 해보세요.')+'<div class="stack">'+(list.map(m=>recordRow('mysteries/'+m.id,'?',m.title)).join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>');
+    return;
+  }
+  const item=list.find(m=>m.id===id);
+  if(!item){missing('mysteries','문제 목록');return;}
+  display(back('mysteries','문제 목록')+heading(item.title)+'<section class="panel"><h2>문제</h2><p>'+escapeHTML(item.question)+'</p></section><button class="button purple full" data-action="answer" aria-expanded="'+answerVisible+'" aria-controls="answer">'+(answerVisible?'정답 숨기기':'정답 보기')+'</button><section id="answer" class="panel answer bottom-action"'+(answerVisible?'':' hidden')+'><h2>정답</h2><p>'+escapeHTML(item.answer)+'</p></section>');
+}
+function cards(){
+  const list=records('sets');
+  display(back('','게임 선택')+heading('스케치북 카드','카드 세트를 골라 제한 시간 안에 단어를 맞혀보세요.')+'<div class="stack">'+(list.map(s=>recordRow('cards/'+s.id,'▤',s.title,s.author+' · '+s.words.length+'개 단어',true)).join('')||'<p class="empty">등록된 카드 세트가 없어요.</p>')+'</div><a class="button full bottom-action" href="#/cards/new">＋ 카드 세트 추가하기</a>');
+}
+function newSet(){
+  display(back('cards','카드 세트')+heading('카드 세트 추가')+'<div class="panel"><form id="set-form"><label>제목<input name="title" required maxlength="60" placeholder="예: 우리 동네 맛집"></label><label>출제자 이름<input name="author" required maxlength="30" placeholder="이름이나 별명"></label><label><span class="countline"><span>단어 목록</span><span id="word-count" class="hint">0개</span></span><textarea name="words" class="words" required maxlength="20000" placeholder="붕어빵&#10;떡볶이&#10;김밥"></textarea><span class="hint">한 줄에 단어 하나씩 입력하거나 목록을 붙여넣으세요.</span></label>'+status+'<button class="button purple full">카드 세트 등록</button></form></div>');
+}
+function setup(id){
+  const set=records('sets').find(s=>s.id===id);
+  if(!set){missing('cards','카드 세트');return;}
+  display(back('cards','카드 세트')+heading(set.title,set.author+' · '+set.words.length+'개 단어')+'<div class="panel"><form id="duration-form" data-id="'+id+'"><label>제한 시간(초)<input class="duration" name="seconds" type="number" min="1" max="3600" required inputmode="numeric" value="'+(game?.id===id?game.seconds:60)+'"></label><div class="presets"><button type="button" class="button secondary small" data-action="preset" data-seconds="30">30초</button><button type="button" class="button secondary small" data-action="preset" data-seconds="60">60초</button><button type="button" class="button secondary small" data-action="preset" data-seconds="90">90초</button></div><button class="button purple full">게임 시작</button></form><div class="actions end bottom-action">'+status+((!cloudEnabled||isAdmin())?'<button type="button" class="button danger small" data-action="delete-set" data-id="'+escapeHTML(set.id)+'">카드 세트 삭제</button>':'')+'</div></div>');
+}
+function begin(set,seconds){
+  try {
+    const Audio = window.AudioContext||window.webkitAudioContext;
+    if(Audio){audioContext??=new Audio();audioContext.resume().catch(()=>{});}
+  } catch {}
+  game={id:set.id,title:set.title,words:[...set.words],index:0,seconds,deadline:Date.now()+seconds*1000,done:''};
+  location.hash='/cards/'+set.id+'/play';
+}
+function sound(){
+  if(!audioContext||audioContext.state!=='running')return;
+  const start=audioContext.currentTime;
+  [660,660,880].forEach((pitch,index)=>{
+    const oscillator=audioContext.createOscillator();
+    const volume=audioContext.createGain();
+    const time=start+index*.16;
+    oscillator.frequency.value=pitch;
+    volume.gain.setValueAtTime(.001,time);
+    volume.gain.exponentialRampToValueAtTime(.27,time+.018);
+    volume.gain.exponentialRampToValueAtTime(.001,time+.125);
+    oscillator.connect(volume).connect(audioContext.destination);
+    oscillator.start(time);
+    oscillator.stop(time+.14);
+  });
+}
+function finish(reason){
+  game.done=reason;
+  if(reason==='time')sound();
+  render();
+}
+function updateClock(){
+  clearTimeout(timeout);
+  if(!game||game.done)return;
+  const remaining=Math.max(0,game.deadline-Date.now());
+  if(remaining===0){finish('time');return;}
+  const seconds=Math.ceil(remaining/1000);
+  const clock=document.querySelector('#clock');
+  if(!clock)return;
+  clock.textContent=String(Math.floor(seconds/60)).padStart(2,'0')+':'+String(seconds%60).padStart(2,'0');
+  clock.classList.toggle('urgent',seconds<=10);
+  timeout=setTimeout(updateClock,Math.max(20,remaining-(seconds-1)*1000));
+}
+function play(id){
+  if(!game||game.id!==id){setup(id);return;}
+  if(game.done){
+    const complete=game.done==='complete';
+    display('<section class="panel result"><h1>'+(complete?'카드 끝!':'시간 종료!')+'</h1><p>'+(complete?'카드를 모두 넘겼어요.':game.index+' / '+game.words.length+'장을 넘겼어요.')+'</p><div class="actions"><a class="button secondary" href="#/cards">카드 세트 목록</a><button class="button purple" data-action="restart">다시 시작</button></div></section>');
+    return;
+  }
+  display('<div class="play-head"><h1>'+escapeHTML(game.title)+'</h1><span class="clock" id="clock" role="timer"></span></div><div class="progress" aria-hidden="true"><span style="width:'+((game.index+1)/game.words.length*100)+'%"></span></div><button class="word-card" data-action="next"><strong>'+escapeHTML(game.words[game.index])+'</strong><span>화면을 탭해서 '+(game.index===game.words.length-1?'마치기':'다음 카드 보기')+'</span></button><div class="play-bottom"><span>'+(game.index+1)+' / '+game.words.length+'</span><a class="button secondary small" href="#/cards/'+id+'">그만하기</a></div>');
+  updateClock();
+}
+function admin(id){
+  if(cloudEnabled&&!isAdmin()){
+    display(back('','게임 선택')+heading('관리자 로그인')+'<div class="panel"><form id="admin-form"><label>이메일<input type="email" name="email" autocomplete="username" required></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required></label>'+status+'<button class="button purple full">로그인</button></form></div>');
+    return;
+  }
+  const list=records('mysteries');
+  if(!id){
+    display(back('','게임 선택')+heading('추리 문제 관리','바다거북 수프에 표시할 문제와 정답을 관리해요.')+(cloudEnabled?'<div class="actions end bottom-action"><button class="button secondary small" data-action="logout">로그아웃</button></div>':'')+'<div class="stack">'+(list.map((m,i)=>'<div class="row"><div class="row-main"><div><h2>'+escapeHTML(m.title)+'</h2></div></div><div class="table-actions"><button class="button secondary small" data-action="up" data-id="'+m.id+'" '+(i===0?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 위로 이동">↑</button><button class="button secondary small" data-action="down" data-id="'+m.id+'" '+(i===list.length-1?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 아래로 이동">↓</button><a class="button secondary small" href="#/admin/'+m.id+'">수정</a></div></div>').join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>'+status+'<a class="button full bottom-action" href="#/admin/new">＋ 추리 문제 추가</a>');
+    return;
+  }
+  const existing=list.find(m=>m.id===id);
+  if(id!=='new'&&!existing){missing('admin','문제 관리');return;}
+  display(back('admin','문제 관리')+heading(existing?'추리 문제 수정':'추리 문제 추가')+'<div class="panel"><form id="mystery-form" data-id="'+(existing?.id??'')+'"><label>제목<input name="title" maxlength="60" required value="'+escapeHTML(existing?.title)+'"></label><label>문제<textarea name="question" maxlength="3000" required>'+escapeHTML(existing?.question)+'</textarea></label><label>정답<textarea name="answer" maxlength="3000" required>'+escapeHTML(existing?.answer)+'</textarea></label>'+status+'<div class="actions end">'+(existing?'<button class="button secondary" type="button" data-action="delete" data-id="'+existing.id+'">문제 삭제</button>':'')+'<button class="button purple">저장</button></div></form></div>');
+}
+function missing(to,label){display(back(to,label)+heading('항목을 찾을 수 없어요')); }
+function render(){
+  clearTimeout(timeout);
+  const path=route();
+  const [page,id,mode]=path;
+  const routeKey=path.join('/');
+  if(routeKey!==previousRoute)answerVisible=false;
+  if(previousRoute.endsWith('/play')&&mode!=='play')game=null;
+  const changed=routeKey!==previousRoute;
+  previousRoute=routeKey;
+  if(page==='admin')adminLink.setAttribute('aria-current','page');
+  else adminLink.removeAttribute('aria-current');
+  if(page==='mysteries')mysteries(id);
+  else if(page==='admin')admin(id);
+  else if(page==='cards'){
+    if(!id)cards();
+    else if(id==='new')newSet();
+    else if(mode==='play')play(id);
+    else setup(id);
+  } else home();
+  if(changed){window.scrollTo(0,0);app.tabIndex=-1;app.focus({preventScroll:true});}
+}
+const parseWords = value => value.split(/\r\n|\r|\n/).map(word=>word.trim()).filter(Boolean);
+app.addEventListener('input', event=>{
+  if(event.target.name==='words')document.querySelector('#word-count').textContent=parseWords(event.target.value).length+'개';
+});
+app.addEventListener('submit',async event=>{
+  event.preventDefault();
+  const form=event.target;
+  const fields=new FormData(form);
+  const value=key=>String(fields.get(key)??'').trim();
+  if(form.id==='admin-form'){
+    const control=form.querySelector('button');
+    control.disabled=true;
+    try{
+      const session=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:value('email'),password:fields.get('password')}});
+      if(!session?.user?.app_metadata?.churijuri_admin){issue('이 계정에는 추리주리 관리자 권한이 없어요.');return;}
+      adminSession={access_token:session.access_token,expires_at:session.expires_at??Math.floor(Date.now()/1000)+session.expires_in,user:{app_metadata:{churijuri_admin:true}}};
+      try {sessionStorage.setItem(sessionKey,JSON.stringify(adminSession));} catch {}
+      render();
+      refreshPage();
+    }catch{issue('이메일과 비밀번호를 확인해 주세요.');}
+    finally{control.disabled=false;}
+  }else if(form.id==='set-form'){
+    const title=value('title'),author=value('author'),words=parseWords(value('words'));
+    if(!title||!author||!words.length){issue('제목, 출제자 이름, 단어를 입력해 주세요.');return;}
+    if(words.length>300||words.some(word=>word.length>200)){issue('단어는 최대 300개까지, 각 항목은 200자 이내로 입력해 주세요.');return;}
+    const newItem={id:makeId(),title,author,words};
+    if(!await storeChange('sets',[...records('sets'),newItem],{method:'POST',body:newItem})){issue(saveError());return;}
+    location.hash='/cards';
+  }else if(form.id==='mystery-form'){
+    const title=value('title'),question=value('question'),answer=value('answer');
+    if(!title||!question||!answer){issue('제목, 문제, 정답을 모두 입력해 주세요.');return;}
+    const id=form.dataset.id;
+    const list=records('mysteries');
+    const entry={id:id||makeId(),title,question,answer};
+    const change=id?{method:'PATCH',id,body:{title,question,answer}}:{method:'POST',body:entry};
+    if(!await storeChange('mysteries',id?list.map(item=>item.id===id?entry:item):[...list,entry],change)){issue(saveError());return;}
+    location.hash='/admin';
+  }else if(form.id==='duration-form'){
+    const seconds=Number(value('seconds'));
+    const set=records('sets').find(item=>item.id===form.dataset.id);
+    if(set&&Number.isInteger(seconds)&&seconds>=1&&seconds<=3600){
+      begin(set,seconds);
+      if(route()[2]==='play')render();
+    }
+  }
+});
+app.addEventListener('click',async event=>{
+  const button=event.target.closest('[data-action]');
+  if(!button)return;
+  const {action,id,seconds}=button.dataset;
+  if(action==='logout'){
+    adminSession=null;
+    try {sessionStorage.removeItem(sessionKey);} catch {}
+    render();
+  }else if(action==='refresh'){
+    await refreshCloud();
+    if(!app.querySelector('form'))render();else updateSyncStatus();
+  }else if(action==='answer'){
+    answerVisible=!answerVisible;
+    document.querySelector('#answer').hidden=!answerVisible;
+    button.textContent=answerVisible?'정답 숨기기':'정답 보기';
+    button.setAttribute('aria-expanded',String(answerVisible));
+  }else if(action==='preset'){
+    document.querySelector('[name="seconds"]').value=seconds;
+  }else if(action==='next'&&game&&!game.done){
+    if(Date.now()>=game.deadline)finish('time');
+    else if(game.index===game.words.length-1){game.index++;finish('complete');}
+    else{game.index++;render();app.querySelector('.word-card')?.focus();}
+  }else if(action==='restart'&&game){
+    const set=records('sets').find(item=>item.id===game.id);
+    if(set){begin(set,game.seconds);render();}
+  }else if(action==='delete-set'){
+    const list=records('sets');
+    const set=list.find(item=>item.id===id);
+    if(!set||!confirm('“'+set.title+'” 카드 세트를 삭제할까요?'))return;
+    if(!await storeChange('sets',list.filter(item=>item.id!==id),{method:'DELETE',id})){issue(saveError());return;}
+    location.hash='/cards';
+  }else if(action==='delete'&&confirm('이 문제를 삭제할까요?')){
+    if(!await storeChange('mysteries',records('mysteries').filter(item=>item.id!==id),{method:'DELETE',id})){issue(saveError());return;}
+    location.hash='/admin';
+  }else if(action==='up'||action==='down'){
+    const list=[...records('mysteries')];
+    const index=list.findIndex(item=>item.id===id),next=index+(action==='up'?-1:1);
+    if(index<0||next<0||next>=list.length)return;
+    [list[index],list[next]]=[list[next],list[index]];
+    if(await storeChange('mysteries',list,{method:'MOVE',id,up:action==='up'}))render();
+    else issue(saveError());
+  }
+});
+window.addEventListener('hashchange',()=>{render();refreshPage();});
+window.addEventListener('online',refreshPage);
+window.addEventListener('storage',()=>{if(route()[2]!=='play'&&!app.querySelector('form'))render();});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(document.querySelector('#clock'))updateClock();refreshPage();}});
+render();
+refreshPage();
+</script>
+</body>
+</html>
