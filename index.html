@@ -52,6 +52,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .home .art:before{display:none}.home :is(.art-secret,.art-night) svg{filter:none}
 .game:has(.art-ocean) .go{background:#d9f3ed}.game:has(.art-deck) .go{background:#fff0b4}.game:has(.art-secret) .go{background:#ffe0ea}.game:has(.art-night) .go{background:#dbe6ff}
 .art-truth{background:#ede4ff}.truth-icon{display:grid;place-items:center;width:94px;height:116px;border:2px solid #3a2653;border-radius:16px;background:#fffaf4;color:#5736a0;font-size:66px;font-weight:950;box-shadow:9px 9px #bda9eb;transform:rotate(-9deg)}
+.truth-card-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}.truth-card-row h2{min-width:0;overflow-wrap:anywhere}.truth-card-actions{display:flex;gap:6px;flex-wrap:nowrap}.truth-card-actions button{white-space:nowrap;padding-inline:10px}.truth-card-actions .truth-delete{color:#962a46}
 </style>
 </head>
 <body>
@@ -561,18 +562,17 @@ function truthPage(mode){
 }
 function truthAdmin(){
   loadTruth();
-  display(back('truth','진실게임')+heading('진실게임 카드 관리')+'<div class="panel"><form id="truth-admin"><label>질문<textarea name="question" maxlength="300" required>'+escapeHTML(truthEdit?.question??'')+'</textarea></label>'+status+'<div class="actions"><button class="button purple" '+(truthCards?'':'disabled')+'>'+(truthEdit?'수정 저장':'카드 추가')+'</button>'+(truthEdit?'<button type="button" class="button secondary" data-action="truth-cancel">수정 취소</button><button type="button" class="button secondary" data-action="truth-delete">삭제</button>':'')+'</div></form></div><section class="panel bottom-action"><h2>등록된 카드'+(truthCards?' · '+truthCards.length+'장':'')+'</h2><div class="stack bottom-action">'+(truthCards?.map(card=>'<div class="row"><div><h2>'+escapeHTML(card.question)+'</h2></div><button type="button" class="button secondary small" data-action="truth-edit" data-id="'+escapeHTML(card.id)+'">수정</button></div>').join('')||(truthFailed?'<button type="button" class="button secondary" data-action="truth-retry">다시 불러오기</button>':truthCards?'등록된 카드가 없어요.':'카드를 불러오는 중이에요.'))+'</div></section>');
+  display(back('truth','진실게임')+heading('진실게임 카드 관리')+'<div class="panel"><form id="truth-admin"><label>질문<textarea name="question" maxlength="300" required>'+escapeHTML(truthEdit?.question??'')+'</textarea></label>'+status+'<div class="actions"><button class="button purple" '+(truthCards?'':'disabled')+'>'+(truthEdit?'수정 저장':'카드 추가')+'</button>'+(truthEdit?'<button type="button" class="button secondary" data-action="truth-cancel">수정 취소</button>':'')+'</div></form></div><section class="panel bottom-action"><h2 id="truth-list-title">등록된 카드'+(truthCards?' · '+truthCards.length+'장':'')+'</h2><div class="stack bottom-action">'+(truthCards?.map(card=>'<div class="row truth-card-row"><h2>'+escapeHTML(card.question)+'</h2><div class="truth-card-actions"><button type="button" class="button secondary small" data-action="truth-edit" data-id="'+escapeHTML(card.id)+'">수정</button><button type="button" class="button secondary small truth-delete" data-action="truth-delete" data-id="'+escapeHTML(card.id)+'">삭제</button></div></div>').join('')||(truthFailed?'<button type="button" class="button secondary" data-action="truth-retry">다시 불러오기</button>':truthCards?'등록된 카드가 없어요.':'카드를 불러오는 중이에요.'))+'</div></section>');
 }
-async function truthSave(form,remove=false){
+async function truthSave(form){
   if(!isAdmin()||mutationPending)return;
   const fields=new FormData(form),question=String(fields.get('question')??'').trim();
-  if(!remove&&!question){issue('질문을 입력해 주세요.');return;}
-  if(remove&&!truthEdit)return;
+  if(!question){issue('질문을 입력해 주세요.');return;}
   const controls=[...form.elements];
   mutationPending=true;
   controls.forEach(control=>control.disabled=true);
   try{
-    await request(truthTable+(truthEdit?'?id=eq.'+encodeURIComponent(truthEdit.id):''),{method:remove?'DELETE':truthEdit?'PATCH':'POST',admin:true,write:true,body:remove?undefined:truthEdit?{question}:{heat:'가벼운맛',question}});
+    await request(truthTable+(truthEdit?'?id=eq.'+encodeURIComponent(truthEdit.id):''),{method:truthEdit?'PATCH':'POST',admin:true,write:true,body:truthEdit?{question}:{heat:'가벼운맛',question}});
     truthEdit=null;truthCards=null;truthFailed=false;
     if(form.isConnected)render();
   }catch{if(form.isConnected)issue('저장하지 못했어요. 관리자 로그인을 확인해 주세요.');}
@@ -716,7 +716,23 @@ app.addEventListener('click',async event=>{
     if(action==='truth-retry')truthFailed=false;
     if(action==='truth-edit'){truthEdit=truthCards?.find(card=>card.id===id);render();app.querySelector('#truth-admin textarea')?.focus();return;}
     if(action==='truth-cancel')truthEdit=null;
-    if(action==='truth-delete'){if(truthEdit&&confirm('이 카드를 삭제할까요?'))await truthSave(app.querySelector('#truth-admin'),true);return;}
+    if(action==='truth-delete'){
+      if(!isAdmin()||mutationPending||!truthCards?.some(card=>card.id===id))return;
+      mutationPending=true;
+      button.disabled=true;
+      try{
+        await request(truthTable+'?id=eq.'+encodeURIComponent(id),{method:'DELETE',admin:true,write:true});
+        truthCards=truthCards.filter(card=>card.id!==id);
+        if(truthEdit?.id===id){truthEdit=null;if(button.isConnected)render();}
+        else button.closest('.truth-card-row')?.remove();
+        const title=app.querySelector('#truth-list-title');
+        if(title)title.textContent='등록된 카드 · '+truthCards.length+'장';
+        if(!truthCards.length&&title)render();
+        issue('카드를 삭제했어요.');
+      }catch{issue('카드를 삭제하지 못했어요. 관리자 로그인과 연결을 확인해 주세요.');}
+      finally{mutationPending=false;button.disabled=false;}
+      return;
+    }
     render();return;
   }
   if(action.startsWith('mafia-')){
