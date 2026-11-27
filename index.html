@@ -55,6 +55,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .truth-card-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}.truth-card-row h2{min-width:0;overflow-wrap:anywhere}.truth-card-actions{display:flex;gap:6px;flex-wrap:nowrap}.truth-card-actions button{white-space:nowrap;padding-inline:10px}.truth-card-actions .truth-delete{color:#962a46}
 .truth-count{display:flex;justify-content:center;margin-top:14px}.truth-count-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:#eee6ff;color:#513398;font-size:.875rem;font-weight:700;line-height:1.4}.truth-progress{margin:0 0 12px;color:var(--muted);font-weight:700}
 .top .manage[hidden]{display:none}
+.admin-password-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}.admin-password-row button{min-height:44px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -99,7 +100,13 @@ async function request(path, {method='GET',body,admin=false,write=false,signal}=
   const response=await fetch(projectUrl.replace(/\/$/,'')+path,{method,headers,signal,body:body===undefined?undefined:JSON.stringify(body)});
   if(!response.ok){
     if(path==='/rest/v1/rpc/cj_mafia'){const error=await response.json().catch(()=>({}));throw new Error(error.message||'Mafia request failed');}
-    throw new Error('Supabase HTTP '+response.status);
+    const error=new Error('Supabase HTTP '+response.status);
+    error.status=response.status;
+    if(path.startsWith('/auth/v1/token?')){
+      const details=await response.json().catch(()=>null);
+      error.code=details?.error_code??details?.code??details?.error;
+    }
+    throw error;
   }
   if(response.status===204||response.headers.get('content-length')==='0')return;
   const payload=await response.text();
@@ -287,7 +294,7 @@ function resetPage(){
 }
 function admin(id){
   if(cloudEnabled&&!isAdmin()){
-    display(back('','게임 선택')+heading('관리자 로그인')+'<div class="panel"><form id="admin-form"><label>이메일<input type="email" name="email" autocomplete="username" required></label><label>비밀번호<input type="password" name="password" autocomplete="current-password" required></label>'+status+'<button class="button purple full">로그인</button></form></div>');
+    display(back('','게임 선택')+heading('관리자 로그인')+'<div class="panel"><form id="admin-form"><label>이메일<input type="email" name="email" inputmode="email" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="username" required></label><div><label for="admin-password">비밀번호</label><div class="admin-password-row"><input id="admin-password" type="password" name="password" autocapitalize="none" autocorrect="off" spellcheck="false" autocomplete="current-password" required><button type="button" class="button secondary small" data-action="admin-password" aria-controls="admin-password">보기</button></div></div>'+status+'<button type="submit" class="button purple full">로그인</button></form></div>');
     return;
   }
   if(id==='truth'){truthAdmin();return;}
@@ -673,16 +680,26 @@ app.addEventListener('submit',async event=>{
     return;
   }
   if(form.id==='admin-form'){
-    const control=form.querySelector('button');
+    const control=form.querySelector('button[type=submit]');
     control.disabled=true;
     try{
-      const session=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:value('email'),password:fields.get('password')}});
+      const session=await request('/auth/v1/token?grant_type=password',{method:'POST',body:{email:value('email').toLowerCase(),password:fields.get('password')}});
       if(!session?.user?.app_metadata?.churijuri_admin){issue('이 계정에는 추리주리 관리자 권한이 없어요.');return;}
       adminSession={access_token:session.access_token,expires_at:session.expires_at??Math.floor(Date.now()/1000)+session.expires_in,user:{app_metadata:{churijuri_admin:true}}};
       try {sessionStorage.setItem(sessionKey,JSON.stringify(adminSession));} catch {}
       render();
       refreshPage();
-    }catch{issue('이메일과 비밀번호를 확인해 주세요.');}
+    }catch(error){
+      if(error.code==='invalid_credentials'||error.code==='invalid_grant'){
+        issue('로그인 정보가 일치하지 않아요. 비밀번호 옆 보기 버튼으로 입력한 내용을 확인해 주세요.');
+      }else if(error.code==='email_not_confirmed'){
+        issue('이메일 인증이 필요한 계정이에요.');
+      }else if(error.status===429){
+        issue('로그인 시도가 너무 많아요. 잠시 후 다시 시도해 주세요.');
+      }else{
+        issue('로그인 서버에 연결하지 못했어요. 연결을 확인하고 다시 시도해 주세요.');
+      }
+    }
     finally{control.disabled=false;}
   }else if(form.id==='set-form'){
     const title=value('title'),author=value('author'),words=parseWords(value('words'));
@@ -713,6 +730,13 @@ app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
+  if(action==='admin-password'){
+    const input=app.querySelector('#admin-password');
+    const visible=input.type==='password';
+    input.type=visible?'text':'password';
+    button.textContent=visible?'숨기기':'보기';
+    return;
+  }
   if(action.startsWith('truth-')){
     if(action==='truth-next'&&++truthIndex>=truthDeck.length){location.hash='/truth';return;}
     if(action==='truth-retry')truthFailed=false;
