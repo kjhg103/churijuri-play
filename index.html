@@ -80,7 +80,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .ladder-board path{fill:none;stroke-linecap:round;stroke-linejoin:round}
 .ladder-rails{stroke:#a6a5ad;stroke-width:1.25px;vector-effect:non-scaling-stroke}
 .ladder-trace{stroke-width:.065;stroke-dasharray:1 1;animation:ladder-draw 3.8s linear both}
-.ladder-results[hidden],.ladder-ends[hidden]{display:none}
+.ladder-results[hidden]{display:none}
 .ladder-results{margin-top:16px}
 .ladder-results ul{list-style:none;padding:0}
 .ladder-results li{display:grid;grid-template-columns:4rem 1fr;gap:10px;padding:8px 0}
@@ -854,12 +854,12 @@ function ladderPage(){
   }
   display(back('','게임 선택')+heading('사다리 팀가르기', '각자 번호를 하나씩 고른 다음 사다리를 열어요.')+
     '<section class="panel ladder-panel">'+controls+'<p class="ladder-count">'+label+'</p><div class="ladder-numbers" style="--players:'+players+'">'+numbers+'</div>'+board+
-    (round?'<div class="ladder-numbers ladder-ends" hidden style="--players:'+players+'">'+round.endpoints.map(team=>'<span>'+teamName(team)+'</span>').join('')+'</div>':'')+'</section>'+results);
+    (round?'<div class="ladder-numbers ladder-ends" style="--players:'+players+'">'+round.endpoints.map(team=>'<span>'+teamName(team)+'</span>').join('')+'</div>':'')+'</section>'+results);
 }
 
 app.addEventListener('animationend',event=>{
   if(event.animationName!=='ladder-draw')return;
-  app.querySelectorAll('.ladder-ends, .ladder-results').forEach(element=>{element.hidden=false;});
+  app.querySelector('.ladder-results')?.removeAttribute('hidden');
 });
 app.addEventListener('change',event=>{
   const {id,value}=event.target;
