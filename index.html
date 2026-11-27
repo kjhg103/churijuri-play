@@ -717,21 +717,29 @@ function loadNominate(){
     if(route()[0]==='nominate'||route().slice(0,2).join('/')==='admin/nominate')render();
   });
 }
+let nominatePreview=null;
 function nominatePage(id){
   loadNominate();
-  const card=nominateCards?.find(item=>item.id===id);
-  if(card){
-    display(back('nominate','질문 목록')+heading('지목게임')+
+  const saved=nominateCards?.find(item=>item.id===id);
+  if(saved){
+    display(back('nominate','다시 뽑기')+heading('지목게임')+
       '<section class="panel mafia-stage"><p class="mafia-phase">'+(nominateHidden?'질문을 숨겼어요':'질문받는 사람에게만 보여주세요')+'</p>'+
-      '<h2>'+(nominateHidden?'궁금한 사람이 있다면 공개해요.':escapeHTML(card.question))+'</h2></section>'+
+      '<h2>'+(nominateHidden?'궁금한 사람이 있다면 공개해요.':escapeHTML(saved.question))+'</h2></section>'+
       '<button type="button" class="button purple full bottom-action" data-action="nominate-toggle">'+(nominateHidden?'질문 공개':'질문 숨기기')+'</button>');
     return;
   }
-  const rows=nominateCards?.map(item=>'<a class="row nominate-card" href="#/nominate/'+encodeURIComponent(item.id)+'"><h2>'+escapeHTML(item.question)+'</h2><span aria-hidden="true">›</span></a>').join('');
-  display(back('','게임 선택')+heading('지목게임','질문을 받은 사람은 모인 사람 중 한 명을 지목해요. 질문이 궁금하면 한 잔을 마시거나 합의한 벌칙 후 공개해요.')+
-    (isAdmin()?'<a class="button secondary full" href="#/admin/nominate">지목 질문 관리</a>':'')+
-    '<div class="stack bottom-action">'+(rows||(nominateFailed?'<button type="button" class="button secondary" data-action="nominate-retry">다시 불러오기</button>':nominateCards?'<p class="empty">등록된 질문이 없어요.</p>':'<p>질문을 불러오는 중이에요.</p>'))+'</div>');
+  if(nominateCards?.length&&!nominateCards.includes(nominatePreview))drawNomination();
+  const preview=nominatePreview;
+  const controls=preview?'<section class="panel mafia-stage"><h2>'+escapeHTML(preview.question)+'</h2></section><a class="button purple full bottom-action" href="#/nominate/'+encodeURIComponent(preview.id)+'">이 질문으로 결정</a><button type="button" class="button secondary full bottom-action" data-action="nominate-draw" '+(nominateCards.length<2?'disabled':'')+'>다른 질문 고르기</button>':
+    nominateFailed?'<button type="button" class="button secondary" data-action="nominate-retry">다시 불러오기</button>':nominateCards?'<p class="empty">등록된 질문이 없어요.</p>':'<p>질문을 불러오는 중이에요.</p>';
+  display(back('','게임 선택')+heading('지목게임','질문을 받은 사람은 모인 사람 중 한 명을 지목해요. 질문이 궁금하면 한 잔을 마시거나 합의한 벌칙 후 공개해요.')+controls+
+    (isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/nominate">지목 질문 관리</a>':''));
 }
+function drawNomination(){
+  const choices=nominateCards.filter(card=>card.id!==nominatePreview?.id);
+  if(choices.length)nominatePreview=choices[Math.floor(Math.random()*choices.length)];
+}
+
 function nominateAdmin(){
   loadNominate();
   display(back('nominate','지목게임')+heading('지목 질문 관리')+'<div class="panel"><form id="nominate-admin"><label>질문<textarea name="question" maxlength="300" required>'+escapeHTML(nominateEdit?.question??'')+'</textarea></label>'+status+'<div class="actions"><button class="button purple" '+(nominateCards?'':'disabled')+'>'+(nominateEdit?'수정 저장':'카드 추가')+'</button>'+(nominateEdit?'<button type="button" class="button secondary" data-action="nominate-cancel">수정 취소</button>':'')+'</div></form></div><section class="panel bottom-action"><h2 id="nominate-list-title">등록된 카드'+(nominateCards?' · '+nominateCards.length+'장':'')+'</h2><div class="stack bottom-action">'+(nominateCards?.map(card=>'<div class="row truth-card-row"><h2>'+escapeHTML(card.question)+'</h2><div class="truth-card-actions"><button type="button" class="button secondary small" data-action="nominate-edit" data-id="'+escapeHTML(card.id)+'">수정</button><button type="button" class="button secondary small truth-delete" data-action="nominate-delete" data-id="'+escapeHTML(card.id)+'">삭제</button></div></div>').join('')||(nominateFailed?'<button type="button" class="button secondary" data-action="nominate-retry">다시 불러오기</button>':nominateCards?'등록된 카드가 없어요.':'카드를 불러오는 중이에요.'))+'</div></section>');
@@ -769,7 +777,10 @@ function render(){
   else adminLink.removeAttribute('aria-current');
   if(page!=='liar'||id!=='play')liarRound=null;
   if(page==='nominate'){
-    if(id!==nominateLast){nominateHidden=false;nominateLast=id;}
+    if(id!==nominateLast){
+      if(!id&&nominateCards?.length)drawNomination();
+      nominateHidden=false;nominateLast=id;
+    }
     nominatePage(id);
   }else if(page==='majority')majorityView(id);
   else if(page==='truth')truthPage(id);
@@ -938,6 +949,7 @@ app.addEventListener('click',async event=>{
     return;
   }
   if(action.startsWith('nominate-')){
+    if(action==='nominate-draw'&&nominateCards?.length)drawNomination();
     if(action==='nominate-toggle')nominateHidden=!nominateHidden;
     if(action==='nominate-retry')nominateFailed=false;
     if(action==='nominate-edit'){nominateEdit=nominateCards?.find(card=>card.id===id);render();app.querySelector('#nominate-admin textarea')?.focus();return;}
