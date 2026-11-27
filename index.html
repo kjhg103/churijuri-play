@@ -67,6 +67,26 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .majority-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.majority-choice{display:grid;align-content:start;gap:8px;padding:clamp(12px,4vw,24px);border:2px solid transparent;border-radius:18px;background:#dceffa;color:#163c60;text-align:left;font:inherit;overflow-wrap:anywhere}.majority-choice:nth-child(2){background:#ffe3d3;color:#763316}.majority-choice span,.majority-choice strong,.majority-choice h2{font-weight:700}.majority-choice[aria-pressed="true"]{border-color:currentColor}.majority-choice[disabled]{opacity:1}.majority-choice[disabled][aria-pressed="false"]{opacity:.65}.majority-tally{font-size:1.9rem;font-weight:700}.truth-card-row>div:first-child{min-width:0;overflow-wrap:anywhere}
 .art-nominate{background:repeating-linear-gradient(135deg,#d7efbc 0 18px,#dff4cb 18px 36px)}.nominate-icon{display:grid;place-items:center;width:96px;height:96px;border-radius:26px;background:#f5ffe9;color:#386331;border:2px solid #386331;box-shadow:7px 7px #9dc880;transform:rotate(-8deg)}.nominate-icon svg{stroke:currentColor;stroke-width:2.8;fill:none}.home .game:has(.art-nominate) .go{background:#386331}.nominate-card h2{overflow-wrap:anywhere}.nominate-card span{flex:none}
 .room-actions{justify-content:flex-end;flex-shrink:0;max-width:60%}
+.art-ladder{background:linear-gradient(145deg,#ded2fd,#a4cafa)}
+.games .game[href="#/ladder"] .go{background:#503690;color:#fff}
+.ladder-settings{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.ladder-settings select{width:100%;min-height:46px;padding:6px 8px;border:1px solid #c8bfdc;border-radius:10px;background:#fff;color:#262033;font:inherit}
+.ladder-count{font-size:.9rem;color:#5d4b77;margin:14px 0}
+.ladder-numbers{display:grid;grid-template-columns:repeat(var(--players),minmax(0,1fr));text-align:center;align-items:center;gap:0;font-size:clamp(9px,2vw,15px);font-weight:700;color:#382866}
+.ladder-numbers span{padding:8px 0;overflow-wrap:anywhere}
+.ladder-cover,.ladder-board{display:grid;width:100%;height:clamp(245px,42vh,420px);border-radius:12px}
+.ladder-cover{place-items:center;background:repeating-linear-gradient(135deg,#f2edf9 0 12px,#ebe4f6 12px 24px)}
+.ladder-board{background:#f7f3fc}
+.ladder-board path{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.ladder-rails{stroke:#bfb2d5;stroke-width:1.1px;vector-effect:non-scaling-stroke}
+.ladder-trace{stroke-width:2px;stroke-dasharray:1;stroke-dashoffset:1;animation:ladder-draw 1.2s var(--delay) ease-in-out forwards}
+.ladder-results,.ladder-ends{animation:ladder-reveal .2s var(--reveal) both}
+.ladder-results{margin-top:16px}
+.ladder-results ul{list-style:none;padding:0}
+.ladder-results li{display:grid;grid-template-columns:4rem 1fr;gap:10px;padding:8px 0}
+@keyframes ladder-draw{to{stroke-dashoffset:0}}
+@keyframes ladder-reveal{from{visibility:hidden;opacity:0}to{visibility:visible;opacity:1}}
+@media(prefers-reduced-motion:reduce){.ladder-trace{animation:none;stroke-dashoffset:0}.ladder-results,.ladder-ends{animation:none}}
 </style>
 </head>
 <body>
@@ -207,7 +227,7 @@ function display(html,wide=false) {
   app.innerHTML=(cloudEnabled?'<p class="panel" id="sync-notice" role="status"'+(syncError?'':' hidden')+'>최신 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요. <button type="button" class="button secondary small" data-action="refresh">다시 불러오기</button></p>':'')+html;
 }
 function home(){
-  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art art-ocean" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#bceae0"/><path d="M12 110q17-12 34 0t34 0t34 0t34 0M27 122q13-8 26 0t26 0t26 0t26 0" fill="none" stroke="#559f97" stroke-width="3"/><g stroke="#163f40" stroke-width="3" stroke-linejoin="round"><path d="M47 56 30 42q-15-7-13 5l17 21M48 85 31 97q-9 11 4 10l24-11M93 53l17-13q11-6 13 5l-12 18M92 91l14 13q11 6 12-5l-7-16" fill="#6fbb98"/><path d="M107 62q17-14 27-4t-1 22q-7 5-24 0" fill="#8ed3ad"/><ellipse cx="72" cy="73" rx="43" ry="27" fill="#50a486"/><path d="m58 61 15-8 15 9-2 17-14 8-15-9zM58 61 45 54m12 24-14 12m45-28 16-9m-18 26 17 11" fill="none"/></g><circle cx="131" cy="65" r="2.6" fill="#163f40"/></svg></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/cards"><div class="art art-deck" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><path d="M25 44h15m-8-8v16m90 49h17m-9-8v17" stroke="#786025" stroke-width="3" stroke-linecap="round"/><g stroke="#302615" stroke-width="3"><rect x="43" y="26" width="78" height="88" rx="12" fill="#ec9b66" transform="rotate(16 82 70)"/><rect x="39" y="28" width="78" height="88" rx="12" fill="#fff6db" transform="rotate(-13 78 72)"/></g><text x="76" y="83" text-anchor="middle" fill="#3b2915" font-size="32" font-weight="700" transform="rotate(-13 76 73)">가</text></svg></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/liar"><div class="art art-secret" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#f4a7b7" opacity=".44"/><g stroke="#542640" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M28 25h61a11 11 0 0 1 11 11v22a11 11 0 0 1-11 11H51L38 80V69H28a11 11 0 0 1-11-11V36a11 11 0 0 1 11-11z" fill="#fff6ef"/><path d="M78 81h52a11 11 0 0 1 11 11v15a11 11 0 0 1-11 11h-12l-12 10v-10H78a11 11 0 0 1-11-11V92a11 11 0 0 1 11-11z" fill="#cf6596"/><path d="M98 99h12m-6-6v12" stroke="#fff6ef"/></g><g fill="#542640"><circle cx="42" cy="47" r="3.5"/><circle cx="58" cy="47" r="3.5"/><circle cx="74" cy="47" r="3.5"/></g></svg></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/mafia"><div class="art art-night" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="52" fill="#40517d"/><path d="M122 13a17 17 0 1 0 19 21 16 16 0 0 1-19-21z" fill="#ffe6a5"/><path d="M33 33v12m-6-6h12m103 35v8m-4-4h8" stroke="#cedaff" stroke-width="2.5" stroke-linecap="round"/><path d="M48 86l10-32q2-6 8-4l14 7 14-7q6-2 8 4l10 32q15 3 18 9c0 9-23 17-50 17s-50-8-50-17q3-6 18-9z" fill="#202944" stroke="#b6c7fc" stroke-width="3.5" stroke-linejoin="round"/><path d="M55 81q25 7 50 0" fill="none" stroke="#b6c7fc" stroke-width="3" stroke-linecap="round"/></svg></div><div class="game-copy"><div><h2>마피아게임</h2><p>각자 휴대폰으로 접속해 같은 방에서 플레이해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/truth"><div class="art art-truth" aria-hidden="true"><span class="truth-icon">?</span></div><div class="game-copy"><div><h2>진실게임</h2><p>한 명씩 돌아가며 질문 카드에 답해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/majority"><div class="art art-majority" aria-hidden="true"><div class="majority-art"><span>A</span><span>B</span></div></div><div class="game-copy"><div><h2>다수편승게임</h2><p>각자 하나를 고르고, 서로의 선택을 확인해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/nominate"><div class="art art-nominate" aria-hidden="true"><span class="nominate-icon"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="M24 4v10m0 20v10M4 24h10m20 0h10"/><circle cx="24" cy="24" r="4"/></svg></span></div><div class="game-copy"><div><h2>지목게임</h2><p>질문을 보고 이 자리에 있는 한 명을 지목해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a></div></section>',true);
+  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art art-ocean" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#bceae0"/><path d="M12 110q17-12 34 0t34 0t34 0t34 0M27 122q13-8 26 0t26 0t26 0t26 0" fill="none" stroke="#559f97" stroke-width="3"/><g stroke="#163f40" stroke-width="3" stroke-linejoin="round"><path d="M47 56 30 42q-15-7-13 5l17 21M48 85 31 97q-9 11 4 10l24-11M93 53l17-13q11-6 13 5l-12 18M92 91l14 13q11 6 12-5l-7-16" fill="#6fbb98"/><path d="M107 62q17-14 27-4t-1 22q-7 5-24 0" fill="#8ed3ad"/><ellipse cx="72" cy="73" rx="43" ry="27" fill="#50a486"/><path d="m58 61 15-8 15 9-2 17-14 8-15-9zM58 61 45 54m12 24-14 12m45-28 16-9m-18 26 17 11" fill="none"/></g><circle cx="131" cy="65" r="2.6" fill="#163f40"/></svg></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/cards"><div class="art art-deck" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><path d="M25 44h15m-8-8v16m90 49h17m-9-8v17" stroke="#786025" stroke-width="3" stroke-linecap="round"/><g stroke="#302615" stroke-width="3"><rect x="43" y="26" width="78" height="88" rx="12" fill="#ec9b66" transform="rotate(16 82 70)"/><rect x="39" y="28" width="78" height="88" rx="12" fill="#fff6db" transform="rotate(-13 78 72)"/></g><text x="76" y="83" text-anchor="middle" fill="#3b2915" font-size="32" font-weight="700" transform="rotate(-13 76 73)">가</text></svg></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/liar"><div class="art art-secret" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#f4a7b7" opacity=".44"/><g stroke="#542640" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M28 25h61a11 11 0 0 1 11 11v22a11 11 0 0 1-11 11H51L38 80V69H28a11 11 0 0 1-11-11V36a11 11 0 0 1 11-11z" fill="#fff6ef"/><path d="M78 81h52a11 11 0 0 1 11 11v15a11 11 0 0 1-11 11h-12l-12 10v-10H78a11 11 0 0 1-11-11V92a11 11 0 0 1 11-11z" fill="#cf6596"/><path d="M98 99h12m-6-6v12" stroke="#fff6ef"/></g><g fill="#542640"><circle cx="42" cy="47" r="3.5"/><circle cx="58" cy="47" r="3.5"/><circle cx="74" cy="47" r="3.5"/></g></svg></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/mafia"><div class="art art-night" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="52" fill="#40517d"/><path d="M122 13a17 17 0 1 0 19 21 16 16 0 0 1-19-21z" fill="#ffe6a5"/><path d="M33 33v12m-6-6h12m103 35v8m-4-4h8" stroke="#cedaff" stroke-width="2.5" stroke-linecap="round"/><path d="M48 86l10-32q2-6 8-4l14 7 14-7q6-2 8 4l10 32q15 3 18 9c0 9-23 17-50 17s-50-8-50-17q3-6 18-9z" fill="#202944" stroke="#b6c7fc" stroke-width="3.5" stroke-linejoin="round"/><path d="M55 81q25 7 50 0" fill="none" stroke="#b6c7fc" stroke-width="3" stroke-linecap="round"/></svg></div><div class="game-copy"><div><h2>마피아게임</h2><p>각자 휴대폰으로 접속해 같은 방에서 플레이해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/truth"><div class="art art-truth" aria-hidden="true"><span class="truth-icon">?</span></div><div class="game-copy"><div><h2>진실게임</h2><p>한 명씩 돌아가며 질문 카드에 답해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/majority"><div class="art art-majority" aria-hidden="true"><div class="majority-art"><span>A</span><span>B</span></div></div><div class="game-copy"><div><h2>다수편승게임</h2><p>각자 하나를 고르고, 서로의 선택을 확인해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/nominate"><div class="art art-nominate" aria-hidden="true"><span class="nominate-icon"><svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="15"/><path d="M24 4v10m0 20v10M4 24h10m20 0h10"/><circle cx="24" cy="24" r="4"/></svg></span></div><div class="game-copy"><div><h2>지목게임</h2><p>질문을 보고 이 자리에 있는 한 명을 지목해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/ladder"><div class="art art-ladder" aria-hidden="true"><svg viewBox="0 0 160 140"><g fill="none" stroke="#503690" stroke-width="5" stroke-linecap="round"><path d="M38 30v80M80 30v80M122 30v80M38 51h42m0 22h42M38 96h42"/></g><g fill="#503690"><circle cx="38" cy="19" r="5"/><circle cx="80" cy="19" r="5"/><circle cx="122" cy="19" r="5"/></g></svg></div><div class="game-copy"><div><h2>사다리 팀가르기</h2><p>번호를 고르고 사다리로 팀을 나눠요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a></div></section>',true);
 }
 function recordRow(url,icon,title,detail='',lime=false){
   return '<a href="#/'+url+'" class="row"><div class="row-main"><span class="tile'+(lime?' lime':'')+'" aria-hidden="true">'+icon+'</span><div><h2>'+escapeHTML(title)+'</h2>'+(detail?'<p>'+escapeHTML(detail)+'</p>':'')+'</div></div><span aria-hidden="true">›</span></a>';
@@ -778,6 +798,77 @@ async function adminCloseRoom(button,id){
   }
 }
 
+const ladder = {players:8, teams:2, round:null};
+const ladderColors=['#5934a4','#08685b','#96394e','#79500b','#245b98','#69486d'];
+
+function ladderTeamOptions(){
+  return Array.from({length:Math.floor(ladder.players/2)-1},(_,i)=>i+2)
+    .filter(teams=>ladder.players%teams<=1);
+}
+
+function makeLadder(players, teams){
+  const rows=players+10;
+  const rungs=Array.from({length:rows},()=>{
+    const links=[];
+    const offset=Math.floor(Math.random()*2);
+    for(let lane=offset;lane<players-1;lane+=2){
+      if(Math.random()<.78)links.push(lane);
+    }
+    return links;
+  });
+  const endpoints=Array.from({length:players},(_,i)=>i<players-players%teams?i%teams+1:0);
+  for(let i=endpoints.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [endpoints[i],endpoints[j]]=[endpoints[j],endpoints[i]];
+  }
+  const paths=Array.from({length:players},(_,start)=>{
+    let lane=start;
+    let d='M '+(lane+.5)+' 0';
+    rungs.forEach((links,index)=>{
+      const y=(index+1)*.45;
+      if(links.includes(lane))lane++;
+      else if(links.includes(lane-1))lane--;
+      d+=' V '+y+' H '+(lane+.5);
+    });
+    return {d:d+' V '+((rows+1)*.45),team:endpoints[lane]};
+  });
+  return {rungs,endpoints,paths};
+}
+
+function ladderPage(){
+  const {players,teams,round}=ladder;
+  const options=ladderTeamOptions();
+  const numbers=Array.from({length:players},(_,i)=>'<span>'+(i+1)+'</span>').join('');
+  const teamName=team=>team?team+'팀':'깍두기';
+  const teamSize=Math.floor(players/teams);
+  const label=teams+'팀 · 팀당 '+teamSize+'명'+(players%teams?' · 깍두기 1명':'');
+  const controls='<div class="ladder-settings"><label>참가 인원<select id="ladder-players">'+Array.from({length:17},(_,i)=>i+4).map(n=>'<option value="'+n+'"'+(n===players?' selected':'')+'>'+n+'명</option>').join('')+'</select></label><label>팀 수<select id="ladder-teams">'+options.map(n=>'<option value="'+n+'"'+(n===teams?' selected':'')+'>'+n+'팀 · 팀당 '+Math.floor(players/n)+'명'+(players%n?' + 깍두기':'')+'</option>').join('')+'</select></label></div>';
+  let board='<div class="ladder-cover"><button class="button purple" data-action="ladder-start">게임 시작</button></div>';
+  let results='';
+  if(round){
+    const h=(round.rungs.length+1)*.45;
+    const rails=Array.from({length:players},(_,i)=>'M '+(i+.5)+' 0 V '+h).join(' ');
+    const links=round.rungs.map((lanes,row)=>lanes.map(lane=>'M '+(lane+.5)+' '+((row+1)*.45)+' h 1').join(' ')).join(' ');
+    board='<svg class="ladder-board" viewBox="0 0 '+players+' '+h+'" preserveAspectRatio="none" aria-hidden="true"><path class="ladder-rails" d="'+rails+' '+links+'"/>'+round.paths.map(({d,team},i)=>'<path class="ladder-trace" vector-effect="non-scaling-stroke" pathLength="1" stroke="'+(team?ladderColors[(team-1)%ladderColors.length]:'#343038')+'" style="--delay:'+i*45+'ms" d="'+d+'"/>').join('')+'</svg>';
+    const groups=[...Array.from({length:teams},(_,i)=>i+1),...(players%teams?[0]:[])];
+    results='<section class="panel ladder-results" style="--reveal:'+(1200+players*45)+'ms"><h2>팀 결과</h2><ul>'+groups.map(team=>'<li><strong>'+teamName(team)+'</strong><span>'+round.paths.flatMap((path,i)=>path.team===team?[(i+1)+'번']:[]).join(', ')+'</span></li>').join('')+'</ul><button class="button secondary full" data-action="ladder-reset">다시하기</button></section>';
+  }
+  display(back('','게임 선택')+heading('사다리 팀가르기', '각자 번호를 하나씩 고른 다음 사다리를 열어요.')+
+    '<section class="panel ladder-panel">'+controls+'<p class="ladder-count">'+label+'</p><div class="ladder-numbers" style="--players:'+players+'">'+numbers+'</div>'+board+
+    (round?'<div class="ladder-numbers ladder-ends" style="--players:'+players+';--reveal:'+(1200+players*45)+'ms">'+round.endpoints.map(team=>'<span>'+teamName(team)+'</span>').join('')+'</div>':'')+'</section>'+results);
+}
+
+app.addEventListener('change',event=>{
+  const {id,value}=event.target;
+  if(id!=='ladder-players'&&id!=='ladder-teams')return;
+  if(id==='ladder-players')ladder.players=Number(value);
+  else ladder.teams=Number(value);
+  const options=ladderTeamOptions();
+  if(!options.includes(ladder.teams))ladder.teams=options[0];
+  ladder.round=null;
+  ladderPage();
+  document.getElementById(id)?.focus();
+});
 function render(){
   clearTimeout(timeout);
   readRecoveryLink();
@@ -801,7 +892,8 @@ function render(){
       nominateHidden=false;nominateLast=id;
     }
     nominatePage(id);
-  }else if(page==='majority')majorityView(id);
+  }else if(page==='ladder')ladderPage();
+  else if(page==='majority')majorityView(id);
   else if(page==='truth')truthPage(id);
   else if(page==='mafia'){
     if(location.hash!==mafiaKey){mafiaKey=location.hash;mafiaMessage='';}
@@ -941,6 +1033,12 @@ adminLogout.addEventListener('click',()=>{
 });
 
 app.addEventListener('click',async event=>{
+  const ladderAction=event.target.closest('[data-action^="ladder-"]')?.dataset.action;
+  if(ladderAction){
+    ladder.round=ladderAction==='ladder-start'?makeLadder(ladder.players,ladder.teams):null;
+    ladderPage();
+    return;
+  }
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
