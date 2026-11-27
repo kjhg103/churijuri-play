@@ -63,6 +63,8 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .home .game:has(.art-deck) .go{background:#8a5a12}
 .home .game:has(.art-secret) .go{background:#a83b70}
 .home .game:has(.art-night) .go{background:#394e87}
+.art-majority{background:linear-gradient(105deg,#bde2f3 50%,#fac2a3 50%)}.majority-art{display:flex;gap:12px}.majority-art span{display:grid;place-items:center;width:68px;height:88px;border:2px solid #30283e;border-radius:14px;background:#e9faff;transform:rotate(-10deg);font-size:34px;font-weight:700}.majority-art span+span{transform:rotate(10deg);background:#fff3e9}.home .game:has(.art-majority) .go{background:#8e4426}
+.majority-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.majority-choice{display:grid;align-content:start;gap:8px;padding:clamp(12px,4vw,24px);border:2px solid transparent;border-radius:18px;background:#dceffa;color:#163c60;text-align:left;font:inherit;overflow-wrap:anywhere}.majority-choice:nth-child(2){background:#ffe3d3;color:#763316}.majority-choice span,.majority-choice strong,.majority-choice h2{font-weight:700}.majority-choice[aria-pressed="true"]{border-color:currentColor}.majority-choice[disabled]{opacity:1}.majority-choice[disabled][aria-pressed="false"]{opacity:.65}.majority-tally{font-size:1.9rem;font-weight:700}.truth-card-row>div:first-child{min-width:0;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -107,7 +109,7 @@ async function request(path, {method='GET',body,admin=false,write=false,signal}=
   if(write)headers.Prefer='return=minimal';
   const response=await fetch(projectUrl.replace(/\/$/,'')+path,{method,headers,signal,body:body===undefined?undefined:JSON.stringify(body)});
   if(!response.ok){
-    if(path==='/rest/v1/rpc/cj_mafia'){const error=await response.json().catch(()=>({}));throw new Error(error.message||'Mafia request failed');}
+    if(path==='/rest/v1/rpc/cj_mafia'||path==='/rest/v1/rpc/cj_majority'){const error=await response.json().catch(()=>({}));throw new Error(error.message||'Mafia request failed');}
     const error=new Error('Supabase HTTP '+response.status);
     error.status=response.status;
     if(path.startsWith('/auth/v1/token?')){
@@ -203,7 +205,7 @@ function display(html,wide=false) {
   app.innerHTML=(cloudEnabled?'<p class="panel" id="sync-notice" role="status"'+(syncError?'':' hidden')+'>최신 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요. <button type="button" class="button secondary small" data-action="refresh">다시 불러오기</button></p>':'')+html;
 }
 function home(){
-  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art art-ocean" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#bceae0"/><path d="M12 110q17-12 34 0t34 0t34 0t34 0M27 122q13-8 26 0t26 0t26 0t26 0" fill="none" stroke="#559f97" stroke-width="3"/><g stroke="#163f40" stroke-width="3" stroke-linejoin="round"><path d="M47 56 30 42q-15-7-13 5l17 21M48 85 31 97q-9 11 4 10l24-11M93 53l17-13q11-6 13 5l-12 18M92 91l14 13q11 6 12-5l-7-16" fill="#6fbb98"/><path d="M107 62q17-14 27-4t-1 22q-7 5-24 0" fill="#8ed3ad"/><ellipse cx="72" cy="73" rx="43" ry="27" fill="#50a486"/><path d="m58 61 15-8 15 9-2 17-14 8-15-9zM58 61 45 54m12 24-14 12m45-28 16-9m-18 26 17 11" fill="none"/></g><circle cx="131" cy="65" r="2.6" fill="#163f40"/></svg></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/cards"><div class="art art-deck" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><path d="M25 44h15m-8-8v16m90 49h17m-9-8v17" stroke="#786025" stroke-width="3" stroke-linecap="round"/><g stroke="#302615" stroke-width="3"><rect x="43" y="26" width="78" height="88" rx="12" fill="#ec9b66" transform="rotate(16 82 70)"/><rect x="39" y="28" width="78" height="88" rx="12" fill="#fff6db" transform="rotate(-13 78 72)"/></g><text x="76" y="83" text-anchor="middle" fill="#3b2915" font-size="32" font-weight="700" transform="rotate(-13 76 73)">가</text></svg></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/liar"><div class="art art-secret" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#f4a7b7" opacity=".44"/><g stroke="#542640" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M28 25h61a11 11 0 0 1 11 11v22a11 11 0 0 1-11 11H51L38 80V69H28a11 11 0 0 1-11-11V36a11 11 0 0 1 11-11z" fill="#fff6ef"/><path d="M78 81h52a11 11 0 0 1 11 11v15a11 11 0 0 1-11 11h-12l-12 10v-10H78a11 11 0 0 1-11-11V92a11 11 0 0 1 11-11z" fill="#cf6596"/><path d="M98 99h12m-6-6v12" stroke="#fff6ef"/></g><g fill="#542640"><circle cx="42" cy="47" r="3.5"/><circle cx="58" cy="47" r="3.5"/><circle cx="74" cy="47" r="3.5"/></g></svg></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/mafia"><div class="art art-night" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="52" fill="#40517d"/><path d="M122 13a17 17 0 1 0 19 21 16 16 0 0 1-19-21z" fill="#ffe6a5"/><path d="M33 33v12m-6-6h12m103 35v8m-4-4h8" stroke="#cedaff" stroke-width="2.5" stroke-linecap="round"/><path d="M48 86l10-32q2-6 8-4l14 7 14-7q6-2 8 4l10 32q15 3 18 9c0 9-23 17-50 17s-50-8-50-17q3-6 18-9z" fill="#202944" stroke="#b6c7fc" stroke-width="3.5" stroke-linejoin="round"/><path d="M55 81q25 7 50 0" fill="none" stroke="#b6c7fc" stroke-width="3" stroke-linecap="round"/></svg></div><div class="game-copy"><div><h2>마피아게임</h2><p>각자 휴대폰으로 접속해 같은 방에서 플레이해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/truth"><div class="art art-truth" aria-hidden="true"><span class="truth-icon">?</span></div><div class="game-copy"><div><h2>진실게임</h2><p>한 명씩 돌아가며 질문 카드에 답해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a></div></section>',true);
+  display('<section class="home"><div class="intro"><h1>어떤 게임 할까요?</h1></div><div class="games"><a class="game" href="#/mysteries"><div class="art art-ocean" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#bceae0"/><path d="M12 110q17-12 34 0t34 0t34 0t34 0M27 122q13-8 26 0t26 0t26 0t26 0" fill="none" stroke="#559f97" stroke-width="3"/><g stroke="#163f40" stroke-width="3" stroke-linejoin="round"><path d="M47 56 30 42q-15-7-13 5l17 21M48 85 31 97q-9 11 4 10l24-11M93 53l17-13q11-6 13 5l-12 18M92 91l14 13q11 6 12-5l-7-16" fill="#6fbb98"/><path d="M107 62q17-14 27-4t-1 22q-7 5-24 0" fill="#8ed3ad"/><ellipse cx="72" cy="73" rx="43" ry="27" fill="#50a486"/><path d="m58 61 15-8 15 9-2 17-14 8-15-9zM58 61 45 54m12 24-14 12m45-28 16-9m-18 26 17 11" fill="none"/></g><circle cx="131" cy="65" r="2.6" fill="#163f40"/></svg></div><div class="game-copy"><div><h2>바다거북 수프</h2><p>질문을 던져 숨은 사연을 추리해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/cards"><div class="art art-deck" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><path d="M25 44h15m-8-8v16m90 49h17m-9-8v17" stroke="#786025" stroke-width="3" stroke-linecap="round"/><g stroke="#302615" stroke-width="3"><rect x="43" y="26" width="78" height="88" rx="12" fill="#ec9b66" transform="rotate(16 82 70)"/><rect x="39" y="28" width="78" height="88" rx="12" fill="#fff6db" transform="rotate(-13 78 72)"/></g><text x="76" y="83" text-anchor="middle" fill="#3b2915" font-size="32" font-weight="700" transform="rotate(-13 76 73)">가</text></svg></div><div class="game-copy"><div><h2>스케치북 카드</h2><p>시간 안에 단어를 맞히고 카드를 넘겨요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/liar"><div class="art art-secret" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="50" fill="#f4a7b7" opacity=".44"/><g stroke="#542640" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M28 25h61a11 11 0 0 1 11 11v22a11 11 0 0 1-11 11H51L38 80V69H28a11 11 0 0 1-11-11V36a11 11 0 0 1 11-11z" fill="#fff6ef"/><path d="M78 81h52a11 11 0 0 1 11 11v15a11 11 0 0 1-11 11h-12l-12 10v-10H78a11 11 0 0 1-11-11V92a11 11 0 0 1 11-11z" fill="#cf6596"/><path d="M98 99h12m-6-6v12" stroke="#fff6ef"/></g><g fill="#542640"><circle cx="42" cy="47" r="3.5"/><circle cx="58" cy="47" r="3.5"/><circle cx="74" cy="47" r="3.5"/></g></svg></div><div class="game-copy"><div><h2>라이어게임</h2><p>서로의 힌트를 듣고 다른 단어를 받은 사람을 찾아요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/mafia"><div class="art art-night" aria-hidden="true"><svg viewBox="0 0 160 140" focusable="false"><circle cx="80" cy="70" r="52" fill="#40517d"/><path d="M122 13a17 17 0 1 0 19 21 16 16 0 0 1-19-21z" fill="#ffe6a5"/><path d="M33 33v12m-6-6h12m103 35v8m-4-4h8" stroke="#cedaff" stroke-width="2.5" stroke-linecap="round"/><path d="M48 86l10-32q2-6 8-4l14 7 14-7q6-2 8 4l10 32q15 3 18 9c0 9-23 17-50 17s-50-8-50-17q3-6 18-9z" fill="#202944" stroke="#b6c7fc" stroke-width="3.5" stroke-linejoin="round"/><path d="M55 81q25 7 50 0" fill="none" stroke="#b6c7fc" stroke-width="3" stroke-linecap="round"/></svg></div><div class="game-copy"><div><h2>마피아게임</h2><p>각자 휴대폰으로 접속해 같은 방에서 플레이해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/truth"><div class="art art-truth" aria-hidden="true"><span class="truth-icon">?</span></div><div class="game-copy"><div><h2>진실게임</h2><p>한 명씩 돌아가며 질문 카드에 답해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a><a class="game" href="#/majority"><div class="art art-majority" aria-hidden="true"><div class="majority-art"><span>A</span><span>B</span></div></div><div class="game-copy"><div><h2>다수편승게임</h2><p>각자 하나를 고르고, 서로의 선택을 확인해요.</p></div><span class="go" aria-hidden="true"><svg viewBox="0 0 20 20" focusable="false"><path d="m7.5 5 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span></div></a></div></section>',true);
 }
 function recordRow(url,icon,title,detail='',lime=false){
   return '<a href="#/'+url+'" class="row"><div class="row-main"><span class="tile'+(lime?' lime':'')+'" aria-hidden="true">'+icon+'</span><div><h2>'+escapeHTML(title)+'</h2>'+(detail?'<p>'+escapeHTML(detail)+'</p>':'')+'</div></div><span aria-hidden="true">›</span></a>';
@@ -306,6 +308,7 @@ function admin(id){
     return;
   }
   if(id==='truth'){truthAdmin();return;}
+  if(id==='majority'){majorityAdmin();return;}
   if(id==='liar'){managedPair=null;liarAdmin();return;}
   const list=records('mysteries');
   if(!id){
@@ -596,6 +599,113 @@ async function truthSave(form){
   finally{mutationPending=false;controls.forEach(control=>control.disabled=false);}
 }
 
+const majorityTable='/rest/v1/cj_majority_cards';
+const majorityRpcPath='/rest/v1/rpc/cj_majority';
+let majorityRooms=null,majorityState,majorityBusy=false,majorityPollPending=false,majorityVersion=0;
+let majorityCards=null,majorityLoading=false,majorityLoadError=false,majorityEdit=null;
+const majorityResumeKey='churijuri.majority.room';
+function majorityRemember(id){try{localStorage.setItem(majorityResumeKey,id);}catch{}}
+function majorityResume(){try{return localStorage.getItem(majorityResumeKey);}catch{return null;}}
+function majorityRpc(op,id=null,data={}){
+  return request(majorityRpcPath,{method:'POST',body:{op,rid:id,token:op==='list'?null:getMafiaToken(),data},signal:AbortSignal.timeout?.(8000)});
+}
+const majorityButton=(action,label,style='secondary',id='')=>'<button type="button" class="button '+style+'" data-action="majority-'+action+'" data-id="'+escapeHTML(id)+'">'+escapeHTML(label)+'</button>';
+const majorityFeedback='<p class="status" role="status" id="majority-status"></p>';
+function majorityMessage(message){const el=app.querySelector('#majority-status');if(el)el.textContent=message;}
+function majorityError(error){
+  const messages={'Nickname used':'이미 쓰는 닉네임이에요.','Room unavailable':'이미 시작했거나 입장할 수 없는 방이에요.','Need 2 players':'최소 2명이 모여야 시작할 수 있어요.','No questions':'등록된 질문이 없어요.'};
+  majorityMessage(messages[error.message]??'연결 상태를 확인하고 다시 시도해 주세요.');
+}
+function majorityView(id){
+  if(id==='new'){
+    display(back('majority','방 목록')+heading('다수편승 방 만들기')+'<div class="panel"><form id="majority-create"><label>방 이름<input name="name" maxlength="40" required></label>'+mafiaNick+majorityFeedback+'<button type="submit" class="button purple full">방 만들기</button></form></div>');
+    return;
+  }
+  if(!mafiaRoomPattern.test(id??'')){
+    const resume=majorityResume();
+    const rooms=(majorityRooms??[]).map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 20명</p></div>'+(r.id===resume||r.phase==='lobby'&&r.players<20?'<a class="button secondary small" href="#/majority/'+r.id+'">'+(r.id===resume?'복귀':'입장')+'</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>')+'</div>').join('');
+    display(back('','게임 선택')+heading('다수편승게임','하나를 고르고, 누가 어떤 선택을 했는지 함께 이야기해요.')+'<a class="button purple full" href="#/majority/new">방 만들기</a>'+(isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/majority">질문 관리</a>':'')+majorityFeedback+'<div class="stack bottom-action">'+(rooms||'<p class="empty">'+(majorityRooms?'개설된 방이 없어요.':'방 목록을 불러오는 중이에요.')+'</p>')+'</div>');
+    return;
+  }
+  const r=majorityState;
+  if(r?.id!==id){
+    display(back('majority','방 목록')+heading(majorityRooms?.find(room=>room.id===id)?.name??'다수편승 방 입장')+'<div class="panel"><form id="majority-join">'+mafiaNick+majorityFeedback+'<button type="submit" class="button purple full">입장하기</button></form></div>');
+    return;
+  }
+  if(r.phase==='closed'||r.phase==='finished'){display(back('majority','방 목록')+heading(r.phase==='closed'?'방이 종료됐어요':'모든 질문을 마쳤어요'));return;}
+  const close='<button type="button" class="button secondary" data-action="majority-close">방 종료</button>';
+  if(r.phase==='lobby'){
+    display(back('majority','방 목록')+heading(r.name,'대기실 · '+r.players.length+'명')+majorityFeedback+'<div class="stack">'+r.players.map(p=>'<div class="row"><h2>'+escapeHTML(p.nick)+(p.id===r.me?' · 나':'')+'</h2></div>').join('')+'</div>'+(r.host?'<div class="actions bottom-action">'+majorityButton('start','게임 시작','purple')+close+'</div>':''));
+    return;
+  }
+  const suits=[['A',r.card.option_a],['B',r.card.option_b]];
+  const result=r.phase==='result';
+  const counts=suits.map(([letter])=>r.players.filter(p=>p.vote===letter).length);
+  const choices=suits.map(([letter,caption],index)=>{
+    if(!result)return '<button type="button" class="majority-choice" data-action="majority-vote" data-id="'+letter+'" '+(r.myVote?'disabled':'')+' aria-pressed="'+(r.myVote===letter)+'"><strong>'+letter+'</strong><span>'+escapeHTML(caption)+'</span></button>';
+    const names=r.players.filter(p=>p.vote===letter).map(p=>escapeHTML(p.nick)).join(' · ');
+    return '<section class="majority-choice"><strong>'+letter+'</strong><h2>'+escapeHTML(caption)+'</h2><p class="majority-tally">'+counts[index]+'표</p><p>'+(names||'선택한 사람 없음')+'</p></section>';
+  }).join('');
+  const unvoted=result?r.players.filter(p=>!p.vote).map(p=>escapeHTML(p.nick)).join(' · '):'';
+  display(back('majority','방 목록')+heading(r.name,r.round+'라운드 · '+(result?'투표 결과':'투표 중'))+'<section class="panel mafia-stage"><h2>'+escapeHTML(r.card.prompt)+'</h2></section><div class="majority-choices">'+choices+'</div>'+(result?'<p class="status">'+(counts[0]===counts[1]?'동률':counts[0]>counts[1]?'A가 다수예요.':'B가 다수예요.')+' · 선택한 이유를 이야기해 보세요.</p>':'<p class="status">'+(r.myVote?'투표 완료 · ':'')+r.submitted+' / '+r.players.length+'명 투표</p>')+(unvoted?'<p>미투표 · '+unvoted+'</p>':'')+majorityFeedback+(r.host?'<div class="actions bottom-action">'+(result?majorityButton('next','다음 질문','purple'):r.submitted?majorityButton('reveal','투표 마감'):'')+close+'</div>':''));
+}
+async function majorityPoll(){
+  const [page,id]=route();
+  if(page!=='majority'||id==='new'||majorityBusy||majorityPollPending)return;
+  if(id&&majorityState?.id!==id&&majorityResume()!==id)return;
+  const version=majorityVersion,hash=location.hash;
+  majorityPollPending=true;
+  try{
+    const state=await majorityRpc(id?'state':'list',id??null);
+    if(hash!==location.hash||version!==majorityVersion||majorityBusy)return;
+    if(JSON.stringify(state)!==JSON.stringify(id?majorityState:majorityRooms)){
+      if(id)majorityState=state;else majorityRooms=state;
+      render();
+    }
+  }catch(error){if(hash===location.hash&&error.message!=='Join first')majorityError(error);}
+  finally{majorityPollPending=false;}
+}
+async function majorityCommand(op,id,data={},button){
+  if(majorityBusy)return;
+  const hash=location.hash;
+  majorityBusy=true;majorityVersion++;
+  if(button)button.disabled=true;
+  try{
+    const state=await majorityRpc(op,id,data);
+    if(op==='join'||op==='create')majorityRemember(state.id);
+    if(hash!==location.hash)return;
+    if(op==='create')location.hash='/majority/'+state.id;
+    else{majorityState=state;render();}
+  }catch(error){if(hash===location.hash)majorityError(error);}
+  finally{majorityBusy=false;if(button)button.disabled=false;}
+}
+function majorityAdmin(){
+  if(!majorityCards&&!majorityLoading&&!majorityLoadError){
+    majorityLoading=true;
+    request(majorityTable+'?order=prompt.asc,id.asc',{admin:true}).then(rows=>{majorityCards=rows;}).catch(()=>{majorityLoadError=true;}).finally(()=>{
+      majorityLoading=false;
+      if(location.hash==='#/admin/majority')render();
+    });
+  }
+  const rows=majorityCards?.map(c=>'<div class="row truth-card-row"><div><h2>'+escapeHTML(c.prompt)+'</h2><p>A · '+escapeHTML(c.option_a)+'</p><p>B · '+escapeHTML(c.option_b)+'</p></div><div class="truth-card-actions">'+majorityButton('edit','수정','secondary small',c.id)+majorityButton('delete','삭제','secondary small',c.id)+'</div></div>').join('');
+  display(back('majority','다수편승게임')+heading('다수편승 질문 관리')+'<div class="panel"><form id="majority-admin"><label>질문<input name="prompt" maxlength="160" required value="'+escapeHTML(majorityEdit?.prompt??'')+'"></label><label>선택지 A<input name="option_a" maxlength="120" required value="'+escapeHTML(majorityEdit?.option_a??'')+'"></label><label>선택지 B<input name="option_b" maxlength="120" required value="'+escapeHTML(majorityEdit?.option_b??'')+'"></label>'+majorityFeedback+'<div class="actions"><button type="submit" class="button purple">'+(majorityEdit?'수정 저장':'질문 추가')+'</button>'+(majorityEdit?majorityButton('cancel','취소'):'')+'</div></form></div><section class="panel bottom-action"><h2>등록된 질문'+(majorityCards?' · '+majorityCards.length+'개':'')+'</h2><div class="stack bottom-action">'+(rows||(majorityLoadError?majorityButton('retry','다시 불러오기'):majorityCards?'등록된 질문이 없어요.':'질문을 불러오는 중이에요.'))+'</div></section>');
+}
+async function majoritySave(form,deleteId){
+  if(!isAdmin()||mutationPending)return;
+  const id=deleteId||majorityEdit?.id;
+  const body=deleteId?undefined:Object.fromEntries([...new FormData(form)].map(([k,v])=>[k,String(v).trim()]));
+  if(body&&(!body.prompt||!body.option_a||!body.option_b||body.option_a.toLowerCase()===body.option_b.toLowerCase())){
+    majorityMessage('질문과 서로 다른 선택지 두 개를 입력해 주세요.');return;
+  }
+  mutationPending=true;
+  try{
+    await request(majorityTable+(id?'?id=eq.'+encodeURIComponent(id):''),{method:deleteId?'DELETE':id?'PATCH':'POST',admin:true,write:true,body});
+    majorityEdit=null;majorityCards=null;majorityLoadError=false;
+    if(location.hash==='#/admin/majority')render();
+  }catch{majorityMessage('저장할 수 없어요. 관리자 로그인과 연결을 확인해 주세요.');}
+  finally{mutationPending=false;}
+}
+
 function render(){
   clearTimeout(timeout);
   readRecoveryLink();
@@ -613,7 +723,8 @@ function render(){
   if(page==='admin')adminLink.setAttribute('aria-current','page');
   else adminLink.removeAttribute('aria-current');
   if(page!=='liar'||id!=='play')liarRound=null;
-  if(page==='truth')truthPage(id);
+  if(page==='majority')majorityView(id);
+  else if(page==='truth')truthPage(id);
   else if(page==='mafia'){
     if(location.hash!==mafiaKey){mafiaKey=location.hash;mafiaMessage='';}
     mafiaView(id);
@@ -650,6 +761,12 @@ app.addEventListener('submit',async event=>{
   const value=key=>String(fields.get(key)??'').trim();
   if(form.id==='mafia-create'||form.id==='mafia-join'){
     await mafiaCommand(form.id==='mafia-create'?'create':'join',route()[1]==='new'?null:route()[1],Object.fromEntries(fields),form.querySelector('button'));
+    return;
+  }
+  if(form.id==='majority-admin'){await majoritySave(form);return;}
+  if(form.id==='majority-create'||form.id==='majority-join'){
+    const create=form.id==='majority-create';
+    await majorityCommand(create?'create':'join',create?null:route()[1],Object.fromEntries(fields),form.querySelector('button'));
     return;
   }
   if(form.id==='truth-admin'){await truthSave(form);return;}
@@ -747,6 +864,23 @@ app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
+  if(action.startsWith('majority-')){
+    const op=action.slice(9);
+    if(['edit','cancel','retry','delete'].includes(op)){
+      if(!isAdmin()||mutationPending)return;
+      if(op==='delete'){
+        if(confirm('이 질문을 삭제할까요?'))await majoritySave(null,id);
+      }else{
+        majorityEdit=op==='edit'?majorityCards?.find(card=>card.id===id):null;
+        if(op==='retry')majorityLoadError=false;
+        render();
+        if(op==='edit')app.querySelector('#majority-admin [name=prompt]')?.focus();
+      }
+    }else if(op!=='close'||confirm('이 방을 종료할까요?')){
+      await majorityCommand(op,route()[1],{choice:id,round:majorityState?.round},button);
+    }
+    return;
+  }
   if(action==='admin-password'){
     const input=app.querySelector('#admin-password');
     const visible=input.type==='password';
@@ -851,9 +985,10 @@ app.addEventListener('click',async event=>{
     else issue(saveError());
   }
 });
-window.addEventListener('hashchange',()=>{render();refreshPage();mafiaPoll();});
-setInterval(()=>{updateMafiaClock();mafiaPoll();},1250);
+window.addEventListener('hashchange',()=>{render();refreshPage();mafiaPoll();majorityPoll();});
+setInterval(()=>{updateMafiaClock();mafiaPoll();majorityPoll();},1250);
 mafiaPoll();
+majorityPoll();
 window.addEventListener('online',refreshPage);
 window.addEventListener('storage',()=>{if(route()[2]!=='play'&&!app.querySelector('form'))render();});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){if(document.querySelector('#clock'))updateClock();refreshPage();}});
