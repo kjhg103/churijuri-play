@@ -100,14 +100,14 @@ let syncError = false;
 let mutationPending = false;
 const isAdmin = () => Boolean(adminSession?.user?.app_metadata?.churijuri_admin === true && adminSession.expires_at > Date.now()/1000);
 const cacheKey = type => keys[type]+':'+projectUrl;
-async function request(path, {method='GET',body,admin=false,write=false,signal}={}) {
+async function request(path, {method='GET',body,admin=false,write=false,returnRows=false,signal}={}) {
   const headers = {apikey:publishableKey};
   if(admin){
     if(!isAdmin())throw new Error('관리자 로그인이 필요해요.');
     headers.Authorization='Bearer '+adminSession.access_token;
   }
   if(body!==undefined)headers['Content-Type']='application/json';
-  if(write)headers.Prefer='return=minimal';
+  if(write)headers.Prefer=returnRows?'return=representation':'return=minimal';
   const response=await fetch(projectUrl.replace(/\/$/,'')+path,{method,headers,signal,body:body===undefined?undefined:JSON.stringify(body)});
   if(!response.ok){
     if(path==='/rest/v1/rpc/cj_mafia'||path==='/rest/v1/rpc/cj_majority'){const error=await response.json().catch(()=>({}));throw new Error(error.message||'Mafia request failed');}
@@ -701,7 +701,8 @@ async function majoritySave(form,deleteId){
   }
   mutationPending=true;
   try{
-    await request(majorityTable+(id?'?id=eq.'+encodeURIComponent(id):''),{method:deleteId?'DELETE':id?'PATCH':'POST',admin:true,write:true,body});
+    const result=await request(majorityTable+(id?'?id=eq.'+encodeURIComponent(id):''),{method:deleteId?'DELETE':id?'PATCH':'POST',admin:true,write:true,returnRows:Boolean(deleteId),body});
+    if(deleteId&&!result?.some(card=>card.id===deleteId))throw new Error('Question was not deleted');
     majorityEdit=null;majorityCards=null;majorityLoadError=false;
     if(location.hash==='#/admin/majority')render();
   }catch{majorityMessage('저장할 수 없어요. 관리자 로그인과 연결을 확인해 주세요.');}
@@ -927,10 +928,13 @@ app.addEventListener('click',async event=>{
   const {action,id,seconds}=button.dataset;
   if(action.startsWith('majority-')){
     const op=action.slice(9);
-    if(['edit','cancel','retry','delete'].includes(op)){
+    if(['edit','cancel','retry','delete','confirm-delete'].includes(op)){
       if(!isAdmin()||mutationPending)return;
       if(op==='delete'){
-        if(confirm('이 질문을 삭제할까요?'))await majoritySave(null,id);
+        button.textContent='삭제 확인';
+        button.dataset.action='majority-confirm-delete';
+      }else if(op==='confirm-delete'){
+        await majoritySave(null,id);
       }else{
         majorityEdit=op==='edit'?majorityCards?.find(card=>card.id===id):null;
         if(op==='retry')majorityLoadError=false;
