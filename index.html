@@ -56,10 +56,11 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .truth-count{display:flex;justify-content:center;margin-top:14px}.truth-count-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:#eee6ff;color:#513398;font-size:.875rem;font-weight:700;line-height:1.4}.truth-progress{margin:0 0 12px;color:var(--muted);font-weight:700}
 .top .manage[hidden]{display:none}
 .admin-password-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px}.admin-password-row button{min-height:44px;white-space:nowrap}
+#admin-logout{border:0;font-family:inherit;cursor:pointer}
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><a href="#/" class="logo"><span class="mark" aria-hidden="true">✦</span>추리주리</a><a href="#/admin" class="manage" id="admin-link">관리자 로그인</a></div></header>
+<header class="top"><div class="top-inner"><a href="#/" class="logo"><span class="mark" aria-hidden="true">✦</span>추리주리</a><a href="#/admin" class="manage" id="admin-link">관리자 로그인</a><button type="button" class="manage" id="admin-logout" hidden>로그아웃</button></div></header>
 <main id="app" class="wrap"></main>
 <footer class="foot"><div class="foot-inner"><span class="mark" aria-hidden="true">✦</span>추리주리</div></footer>
 <script>
@@ -74,6 +75,7 @@ const seedSets = [
 ];
 const app = document.querySelector('#app');
 const adminLink = document.querySelector('#admin-link');
+const adminLogout = document.querySelector('#admin-logout');
 const keys = {mysteries:'churijuri.v1.mysteries',sets:'churijuri.v1.sets'};
 const datasets = {mysteries:seedMysteries,sets:seedSets};
 const projectUrl = 'https://fpwivbuzsyzhbmupvlxh.supabase.co'; // Supabase Project URL
@@ -301,7 +303,7 @@ function admin(id){
   if(id==='liar'){managedPair=null;liarAdmin();return;}
   const list=records('mysteries');
   if(!id){
-    display(back('mysteries','바다거북 수프')+heading('추리 문제 관리','바다거북 수프에 표시할 문제와 정답을 관리해요.')+(cloudEnabled?'<div class="actions end bottom-action"><a class="button secondary small" href="#/admin/liar">라이어게임 키워드 관리</a><button class="button secondary small" data-action="logout">로그아웃</button></div>':'')+'<div class="stack">'+(list.map((m,i)=>'<div class="row"><div class="row-main"><div><h2>'+escapeHTML(m.title)+'</h2></div></div><div class="table-actions"><button class="button secondary small" data-action="up" data-id="'+m.id+'" '+(i===0?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 위로 이동">↑</button><button class="button secondary small" data-action="down" data-id="'+m.id+'" '+(i===list.length-1?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 아래로 이동">↓</button><a class="button secondary small" href="#/admin/'+m.id+'">수정</a></div></div>').join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>'+status+'<a class="button full bottom-action" href="#/admin/new">＋ 추리 문제 추가</a>');
+    display(back('mysteries','바다거북 수프')+heading('추리 문제 관리','바다거북 수프에 표시할 문제와 정답을 관리해요.')+(cloudEnabled?'<div class="actions end bottom-action"><a class="button secondary small" href="#/admin/liar">라이어게임 키워드 관리</a></div>':'')+'<div class="stack">'+(list.map((m,i)=>'<div class="row"><div class="row-main"><div><h2>'+escapeHTML(m.title)+'</h2></div></div><div class="table-actions"><button class="button secondary small" data-action="up" data-id="'+m.id+'" '+(i===0?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 위로 이동">↑</button><button class="button secondary small" data-action="down" data-id="'+m.id+'" '+(i===list.length-1?'disabled':'')+' aria-label="'+escapeHTML(m.title)+' 아래로 이동">↓</button><a class="button secondary small" href="#/admin/'+m.id+'">수정</a></div></div>').join('')||'<p class="empty">등록된 문제가 없어요.</p>')+'</div>'+status+'<a class="button full bottom-action" href="#/admin/new">＋ 추리 문제 추가</a>');
     return;
   }
   const existing=list.find(m=>m.id===id);
@@ -599,7 +601,9 @@ function render(){
   if(previousRoute.endsWith('/play')&&mode!=='play')game=null;
   const changed=routeKey!==previousRoute;
   previousRoute=routeKey;
-  adminLink.hidden=isAdmin();
+  const signedIn=isAdmin();
+  adminLink.hidden=signedIn;
+  adminLogout.hidden=!signedIn;
   if(page==='admin')adminLink.setAttribute('aria-current','page');
   else adminLink.removeAttribute('aria-current');
   if(page!=='liar'||id!=='play')liarRound=null;
@@ -726,6 +730,13 @@ app.addEventListener('submit',async event=>{
     }
   }
 });
+adminLogout.addEventListener('click',()=>{
+  adminSession=null;
+  answerVisible=false;
+  try {sessionStorage.removeItem(sessionKey);} catch {}
+  render();
+});
+
 app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
@@ -798,10 +809,6 @@ app.addEventListener('click',async event=>{
   else if(action==='liar-next'&&liarRound?.revealed){
     liarRound.revealed=false;
     if(++liarRound.index===liarRound.count)liarRound.phase='vote';
-    render();
-  }else if(action==='logout'){
-    adminSession=null;
-    try {sessionStorage.removeItem(sessionKey);} catch {}
     render();
   }else if(action==='refresh'){
     await refreshCloud();
