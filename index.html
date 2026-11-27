@@ -722,10 +722,10 @@ function nominatePage(id){
   loadNominate();
   const saved=nominateCards?.find(item=>item.id===id);
   if(saved){
-    display(back('nominate','다시 뽑기')+heading('지목게임')+
+    display(back('','게임 선택')+heading('지목게임')+
       '<section class="panel mafia-stage"><p class="mafia-phase">'+(nominateHidden?'질문을 숨겼어요':'질문받는 사람에게만 보여주세요')+'</p>'+
       '<h2>'+(nominateHidden?'궁금한 사람이 있다면 공개해요.':escapeHTML(saved.question))+'</h2></section>'+
-      '<button type="button" class="button purple full bottom-action" data-action="nominate-toggle">'+(nominateHidden?'질문 공개':'질문 숨기기')+'</button>');
+      '<button type="button" class="button purple full bottom-action" data-action="nominate-toggle">'+(nominateHidden?'질문 공개':'질문 숨기기')+'</button><a class="button secondary full bottom-action" href="#/nominate">다시 뽑기</a>');
     return;
   }
   if(nominateCards?.length&&!nominateCards.includes(nominatePreview))drawNomination();
