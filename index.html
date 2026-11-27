@@ -66,6 +66,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .art-majority{background:linear-gradient(105deg,#bde2f3 50%,#fac2a3 50%)}.majority-art{display:flex;gap:12px}.majority-art span{display:grid;place-items:center;width:68px;height:88px;border:2px solid #30283e;border-radius:14px;background:#e9faff;transform:rotate(-10deg);font-size:34px;font-weight:700}.majority-art span+span{transform:rotate(10deg);background:#fff3e9}.home .game:has(.art-majority) .go{background:#8e4426}
 .majority-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.majority-choice{display:grid;align-content:start;gap:8px;padding:clamp(12px,4vw,24px);border:2px solid transparent;border-radius:18px;background:#dceffa;color:#163c60;text-align:left;font:inherit;overflow-wrap:anywhere}.majority-choice:nth-child(2){background:#ffe3d3;color:#763316}.majority-choice span,.majority-choice strong,.majority-choice h2{font-weight:700}.majority-choice[aria-pressed="true"]{border-color:currentColor}.majority-choice[disabled]{opacity:1}.majority-choice[disabled][aria-pressed="false"]{opacity:.65}.majority-tally{font-size:1.9rem;font-weight:700}.truth-card-row>div:first-child{min-width:0;overflow-wrap:anywhere}
 .art-nominate{background:repeating-linear-gradient(135deg,#d7efbc 0 18px,#dff4cb 18px 36px)}.nominate-icon{display:grid;place-items:center;width:96px;height:96px;border-radius:26px;background:#f5ffe9;color:#386331;border:2px solid #386331;box-shadow:7px 7px #9dc880;transform:rotate(-8deg)}.nominate-icon svg{stroke:currentColor;stroke-width:2.8;fill:none}.home .game:has(.art-nominate) .go{background:#386331}.nominate-card h2{overflow-wrap:anywhere}.nominate-card span{flex:none}
+.room-actions{justify-content:flex-end;flex-shrink:0;max-width:60%}
 </style>
 </head>
 <body>
@@ -488,7 +489,7 @@ function mafiaView(id){
     return;
   }
   if(!mafiaRoomPattern.test(id??'')){
-    const rooms=mafiaRooms.map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 12명 · '+(r.mode==='auto'?'자동':'수동')+' 진행</p></div>'+(mafiaResume===r.id?'<a class="button secondary small" href="#/mafia/'+r.id+'">복귀</a>':r.phase==='lobby'&&r.players<12?'<a class="button secondary small" href="#/mafia/'+r.id+'">입장</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>')+'</div>').join('');
+    const rooms=mafiaRooms.map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 12명 · '+(r.mode==='auto'?'자동':'수동')+' 진행</p></div><div class="actions room-actions">'+(mafiaResume===r.id?'<a class="button secondary small" href="#/mafia/'+r.id+'">복귀</a>':r.phase==='lobby'&&r.players<12?'<a class="button secondary small" href="#/mafia/'+r.id+'">입장</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>') +adminRoomControl(r.id)+'</div></div>').join('');
     display(back('','게임 선택')+heading('마피아게임','각자 폰으로 같은 방에 들어와 플레이해요.')+'<a class="button purple full" href="#/mafia/new">방 만들기</a>'+feedback+'<div class="stack bottom-action">'+(rooms||'<p class="empty">'+(mafiaLoaded?'개설된 방이 없어요.':'방 목록을 불러오는 중이에요.')+'</p>')+'</div>');
     return;
   }
@@ -499,7 +500,7 @@ function mafiaView(id){
     return;
   }
   if(r.phase==='closed'){
-    display(toList+heading('방이 종료됐어요','방장이 이 방을 종료했어요.'));
+    display(toList+heading('방이 종료됐어요','이 방은 종료됐어요.'));
     return;
   }
   const acting=r.alive&&(r.phase===r.role||r.phase==='vote');
@@ -625,7 +626,7 @@ function majorityView(id){
   }
   if(!mafiaRoomPattern.test(id??'')){
     const resume=majorityResume();
-    const rooms=(majorityRooms??[]).map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 20명</p></div>'+(r.id===resume||r.phase==='lobby'&&r.players<20?'<a class="button secondary small" href="#/majority/'+r.id+'">'+(r.id===resume?'복귀':'입장')+'</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>')+'</div>').join('');
+    const rooms=(majorityRooms??[]).map(r=>'<div class="row"><div><h2>'+escapeHTML(r.name)+'</h2><p>'+r.players+' / 20명</p></div><div class="actions room-actions">'+(r.id===resume||r.phase==='lobby'&&r.players<20?'<a class="button secondary small" href="#/majority/'+r.id+'">'+(r.id===resume?'복귀':'입장')+'</a>':'<span>'+(r.phase==='lobby'?'정원 마감':'진행 중')+'</span>') +adminRoomControl(r.id)+'</div></div>').join('');
     display(back('','게임 선택')+heading('다수편승게임','하나를 고르고, 누가 어떤 선택을 했는지 함께 이야기해요.')+'<a class="button purple full" href="#/majority/new">방 만들기</a>'+(isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/majority">질문 관리</a>':'')+majorityFeedback+'<div class="stack bottom-action">'+(rooms||'<p class="empty">'+(majorityRooms?'개설된 방이 없어요.':'방 목록을 불러오는 중이에요.')+'</p>')+'</div>');
     return;
   }
@@ -758,6 +759,23 @@ async function nominateSave(form){
     if(form.isConnected)render();
   }catch{if(form.isConnected)issue('저장하지 못했어요. 관리자 로그인을 확인해 주세요.');}
   finally{mutationPending=false;controls.forEach(control=>control.disabled=false);}
+}
+
+function adminRoomControl(id){
+  return isAdmin()?'<button type="button" class="button secondary small" data-action="admin-room-close" data-id="'+escapeHTML(id)+'">방 종료</button>':'';
+}
+async function adminCloseRoom(button,id){
+  const [game,room]=route();
+  if(!isAdmin()||room||!['mafia','majority'].includes(game))return;
+  button.disabled=true;
+  try{
+    await request('/rest/v1/rpc/cj_admin_close_room',{method:'POST',admin:true,body:{game,room_id:id}});
+    if(game==='mafia')mafiaRooms=mafiaRooms.filter(r=>r.id!==id);
+    else majorityRooms=(majorityRooms??[]).filter(r=>r.id!==id);
+    if(route().join('/')===game)render();
+  }catch{
+    if(button.isConnected){button.textContent='종료 실패 · 다시 시도';button.disabled=false;}
+  }
 }
 
 function render(){
@@ -926,6 +944,12 @@ app.addEventListener('click',async event=>{
   const button=event.target.closest('[data-action]');
   if(!button)return;
   const {action,id,seconds}=button.dataset;
+  if(action==='admin-room-close'){
+    button.textContent='종료 확인';
+    button.dataset.action='admin-room-confirm';
+    return;
+  }
+  if(action==='admin-room-confirm'){await adminCloseRoom(button,id);return;}
   if(action.startsWith('majority-')){
     const op=action.slice(9);
     if(['edit','cancel','retry','delete','confirm-delete'].includes(op)){
