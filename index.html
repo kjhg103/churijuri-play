@@ -874,6 +874,7 @@ app.addEventListener('submit',async event=>{
       if(!session?.user?.app_metadata?.churijuri_admin){issue('이 계정에는 추리주리 관리자 권한이 없어요.');return;}
       adminSession={access_token:session.access_token,expires_at:session.expires_at??Math.floor(Date.now()/1000)+session.expires_in,user:{app_metadata:{churijuri_admin:true}}};
       try {sessionStorage.setItem(sessionKey,JSON.stringify(adminSession));} catch {}
+      location.replace('#/');
       render();
       refreshPage();
     }catch(error){
