@@ -53,6 +53,7 @@ form{display:grid;gap:17px}label{display:grid;gap:7px;font-size:15px;font-weight
 .game:has(.art-ocean) .go{background:#d9f3ed}.game:has(.art-deck) .go{background:#fff0b4}.game:has(.art-secret) .go{background:#ffe0ea}.game:has(.art-night) .go{background:#dbe6ff}
 .art-truth{background:#ede4ff}.truth-icon{display:grid;place-items:center;width:94px;height:116px;border:2px solid #3a2653;border-radius:16px;background:#fffaf4;color:#5736a0;font-size:66px;font-weight:700;box-shadow:9px 9px #bda9eb;transform:rotate(-9deg)}
 .truth-card-row{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px}.truth-card-row h2{min-width:0;overflow-wrap:anywhere}.truth-card-actions{display:flex;gap:6px;flex-wrap:nowrap}.truth-card-actions button{white-space:nowrap;padding-inline:10px}.truth-card-actions .truth-delete{color:#962a46}
+.truth-count{display:flex;justify-content:center;margin-top:14px}.truth-count-badge{display:inline-flex;align-items:center;padding:5px 12px;border-radius:999px;background:#eee6ff;color:#513398;font-size:.875rem;font-weight:700;line-height:1.4}.truth-progress{margin:0 0 12px;color:var(--muted);font-weight:700}
 </style>
 </head>
 <body>
@@ -555,10 +556,10 @@ function truthPage(mode){
   loadTruth();
   if(mode==='play'&&truthIndex<truthDeck.length){
     const card=truthDeck[truthIndex];
-    display(back('truth','진실게임')+heading(((truthIndex%8)+1)+'번 참가자', (truthIndex+1)+' / '+truthDeck.length+'장')+'<section class="panel mafia-stage"><h2>'+escapeHTML(card.question)+'</h2></section><button type="button" class="button purple full bottom-action" data-action="truth-next">'+(truthIndex+1===truthDeck.length?'마치기':'다음 질문 / 패스')+'</button>');
+    display(back('truth','진실게임')+'<p class="truth-progress" aria-label="카드 진행도">'+(truthIndex+1)+' / '+truthDeck.length+'장</p>'+'<section class="panel mafia-stage"><h2>'+escapeHTML(card.question)+'</h2></section><button type="button" class="button purple full bottom-action" data-action="truth-next">'+(truthIndex+1===truthDeck.length?'마치기':'다음 질문 / 패스')+'</button>');
     return;
   }
-  display(back('','게임 선택')+heading('진실게임','한 명씩 돌아가며 질문에 답해요. 대답하기 곤란하면 패스해도 돼요.')+'<div class="panel"><form id="truth-start">'+status+'<button class="button purple full" '+(truthCards?.length?'':'disabled')+'>시작하기</button></form>'+(truthFailed?'<button type="button" class="button secondary" data-action="truth-retry">다시 불러오기</button>':truthCards?'<p>'+truthCards.length+'장</p>':'<p>질문을 불러오는 중이에요.</p>')+'</div>'+(isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/truth">진실게임 카드 관리</a>':''));
+  display(back('','게임 선택')+heading('진실게임','한 명씩 돌아가며 질문에 답해요. 대답하기 곤란하면 패스해도 돼요.')+'<div class="panel"><form id="truth-start">'+status+'<button class="button purple full" '+(truthCards?.length?'':'disabled')+'>시작하기</button></form>'+(truthFailed?'<button type="button" class="button secondary" data-action="truth-retry">다시 불러오기</button>':truthCards?'<div class="truth-count"><span class="truth-count-badge">'+truthCards.length+'장</span></div>':'<p>질문을 불러오는 중이에요.</p>')+'</div>'+(isAdmin()?'<a class="button secondary full bottom-action" href="#/admin/truth">진실게임 카드 관리</a>':''));
 }
 function truthAdmin(){
   loadTruth();
